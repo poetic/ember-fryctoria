@@ -1,25 +1,12 @@
-# Ember-free-sync
+# Instruction
+```bash
+ember addon:install ember-free-sync
+```
+That's it.
 
-This README outlines the details of collaborating on this Ember addon.
+# How does it work?
+FreeSync extends the ember [data store](http://emberjs.com/api/data/classes/DS.Store.html). It utilizes [ember-localforage-adapter](https://github.com/genkgo/ember-localforage-adapter/) to read and write locally. Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue of jobs when the user create, update or delete in offline mode. And flush this queue when online to keep sync the server.
 
-## Installation
+# TODO:
+1. overwrite methods in DS.Store
 
-* `git clone` this repository
-* `npm install`
-* `bower install`
-
-## Running
-
-* `ember server`
-* Visit your app at http://localhost:4200.
-
-## Running Tests
-
-* `ember test`
-* `ember test --server`
-
-## Building
-
-* `ember build`
-
-For more information on using ember-cli, visit [http://www.ember-cli.com/](http://www.ember-cli.com/).
