@@ -5,4 +5,11 @@
 {{link-to 'update' 'update'}}
 {{link-to 'create' 'create'}}
 {{link-to 'delete' 'delete'}}
+<button id="online-toggle" {{action 'toggleOnline'}}>
+  {{#if isOnline}}
+    Go Offline
+  {{else}}
+    Go Online
+  {{/if}}
+</button>
 {{outlet}}
