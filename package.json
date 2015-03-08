@@ -42,6 +42,7 @@
     "ember-data store"
   ],
   "ember-addon": {
-    "configPath": "tests/dummy/config"
+    "configPath": "tests/dummy/config",
+    "defaultBlueprint": "application-store",
   }
 }

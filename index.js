@@ -2,5 +2,5 @@
 'use strict';
 
 module.exports = {
-  name: 'ember-free-sync'
+  name: 'ember-ice-sync'
 };

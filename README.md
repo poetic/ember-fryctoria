@@ -1,12 +1,20 @@
 # Instruction
+### Step1: Install the addon.
 ```bash
-ember addon:install ember-free-sync
+ember addon:install ember-ice-sync
 ```
-That's it.
+### Step2: Offline!
+
 
 # How does it work?
-FreeSync extends the ember [data store](http://emberjs.com/api/data/classes/DS.Store.html). It utilizes [ember-localforage-adapter](https://github.com/genkgo/ember-localforage-adapter/) to read and write locally. Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue of jobs when the user create, update or delete in offline mode. And flush this queue when online to keep sync the server.
+IceSync extends the ember [data store](http://emberjs.com/api/data/classes/DS.Store.html).
+It utilizes [ember-localforage-adapter](https://github.com/genkgo/ember-localforage-adapter/) to read and write locally.
+Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue of jobs when the user create, update or delete in offline mode. When online we flush this queue to keep the server in sync.
 
 # TODO:
+1. create an application store
 1. overwrite methods in DS.Store
+1. add a blueprint for applicaiton store
 
+# Resources:
+1. [How ember data store is initialized] (https://github.com/emberjs/data/blob/b8aff0910775f864d6f918ecda1333491a3c001f/packages/ember-data/lib/initializers/store.js)
