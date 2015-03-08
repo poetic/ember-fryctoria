@@ -1,0 +1,7 @@
+<h2>delete</h2>
+{{#if model.isDeleted}}
+  <div id='status'>deleted</div>
+{{/if}}
+<div id="id">{{model.id}}</div>
+<div id="name">{{model.name}}</div>
+<button id='delete' {{action 'delete'}}>Delete</button>

@@ -1,0 +1,7 @@
+<h2>create</h2>
+{{#if model.isSaved}}
+  <div id='status'>created</div>
+{{/if}}
+{{input value=model.name id='name'}}
+{{input value=model.age  id='age'}}
+<button id='create' {{action 'create'}}>Create</button>

@@ -1,0 +1,11 @@
+<h2>update</h2>
+<div id='status'>
+  {{#if model.isDirty}}
+    isDirty
+  {{else}}
+    isClean
+  {{/if}}
+</div>
+{{input value=model.name id='name'}}
+{{input value=model.age  id='age'}}
+<button id='update' {{action 'update'}}>Update</button>

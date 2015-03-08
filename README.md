@@ -14,7 +14,18 @@ Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue 
 # TODO:
 1. create an application store
 1. overwrite methods in DS.Store
+  1. fetchAll
+  1. fetchById
+  1. flushPendingSave(?)
+  1. didSaveRecord(?)
+  1. recordWasInvalid(?)
+  1. recordWasError(?)
+  1. createRecord(This does not talk to adapter, we do not care)
+  1. deleteRecord(This is just an alias to Model#deleteRecord, we do not care)
 1. add a blueprint for applicaiton store
 
 # Resources:
 1. [How ember data store is initialized] (https://github.com/emberjs/data/blob/b8aff0910775f864d6f918ecda1333491a3c001f/packages/ember-data/lib/initializers/store.js)
+
+# Temp:
+Get all methods we need to overwrite
