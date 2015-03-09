@@ -10,7 +10,7 @@ module.exports = function(app) {
 
   usersRouter.get('/', function(req, res) {
     res.send({
-      'users': users
+      'users': users.filter(Boolean)
     });
   });
 
@@ -36,6 +36,7 @@ module.exports = function(app) {
   });
 
   usersRouter.delete('/:id', function(req, res) {
+    delete users[+req.params.id - 1];
     res.status(204).end();
   });
 
