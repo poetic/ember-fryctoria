@@ -6,13 +6,13 @@ var Promise = Ember.RSVP.Promise;
 
 export default DS.Store.extend({
   init: function() {
-    var iceLocalAdapter = LFAdapter.create({ container: this.get('container') });
-    var iceTrashStore   = DS.Store.extend({
+    var localAdapter = LFAdapter.create({ container: this.get('container') });
+    var trashStore   = DS.Store.extend({
         adapter:   this.get('localAdapter'),
         container: this.get('container')
       }).create();
-    this.set('iceLocalAdapter', iceLocalAdapter);
-    this.set('iceTrashStore',   iceTrashStore);
+    this.set('localAdapter', localAdapter);
+    this.set('trashStore',   trashStore);
 
     this._super.apply(this, arguments);
   },
@@ -24,7 +24,7 @@ export default DS.Store.extend({
 
     return _super.call(store, type)
       .then(function(records) {
-        return store.iceReloadLocalRecords(type, records);
+        return store.reloadLocalRecords(type, records);
       })
       .catch(function(error) {
         if(isOffline(error && error.status)) {
@@ -39,9 +39,9 @@ export default DS.Store.extend({
       });
   },
 
-  iceReloadLocalRecords: function(type, records) {
-    var localAdapter = this.get('iceLocalAdapter');
-    var trashStore   = this.get('iceTrashStore');
+  reloadLocalRecords: function(type, records) {
+    var localAdapter = this.get('localAdapter');
+    var trashStore   = this.get('trashStore');
     var modelType    = this.modelFor(type);
 
     localAdapter.findAll(trashStore, modelType)
@@ -76,7 +76,7 @@ export default DS.Store.extend({
    */
   adapterFor: function() {
     if(this.get('useLocalAdapter')) {
-      return this.get('iceLocalAdapter');
+      return this.get('localAdapter');
     } else {
       return this._super.apply(this, arguments);
     }

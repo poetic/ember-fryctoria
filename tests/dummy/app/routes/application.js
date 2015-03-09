@@ -13,8 +13,9 @@ export default Ember.Route.extend({
 
       if(isOnline) {
         var mockId = Ember.$.mockjax({
-          status: 0,
-          url: /.*/g,
+          status:       0,
+          url:          /.*/g,
+          responseTime: 0,
         });
         ctrl.set('mockId', mockId);
       } else {

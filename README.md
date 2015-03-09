@@ -26,6 +26,7 @@ Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue 
 
 # Resources:
 1. [How ember data store is initialized] (https://github.com/emberjs/data/blob/b8aff0910775f864d6f918ecda1333491a3c001f/packages/ember-data/lib/initializers/store.js)
+2. [Ember Data Store] (https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L107)
 
 # Temp:
 Get all methods we need to overwrite

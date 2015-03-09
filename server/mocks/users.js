@@ -15,9 +15,13 @@ module.exports = function(app) {
   });
 
   usersRouter.post('/', function(req, res) {
+    var user = req.body.user;
+    user.id  = users.length + 1;
+    users.push(user);
+
     res.status(201);
     res.send({
-      'users': {id: users.length + 1}
+      'users': user
     });
   });
 
@@ -28,6 +32,11 @@ module.exports = function(app) {
   });
 
   usersRouter.put('/:id', function(req, res) {
+    var id   = req.params.id;
+    var user = req.body.user;
+    user.id = id;
+    users[+id - 1] = user;
+
     res.send({
       'users': {
         id: req.params.id
