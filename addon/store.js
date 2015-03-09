@@ -56,7 +56,16 @@ export default DS.Store.extend({
         // create all
         Promise.all(previousRecords).then(function() {
           records.forEach(function(record) {
-            localAdapter.createRecord(trashStore, modelType, record);
+            if(record.get('id')) {
+              localAdapter.createRecord(trashStore, modelType, record);
+            } else {
+              var recordName = record.constructor && record.constructor.typeKey;
+              var recordData = record.toJSON && record.toJSON();
+              Ember.Logger.warn(
+                'Record ' + recordName + ' does not have an id: ',
+                recordData
+              );
+            }
           });
         });
       });
