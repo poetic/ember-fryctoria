@@ -107,6 +107,7 @@ export default DS.Store.extend({
     localAdapter.createRecord(trashStore, modelType, record);
   },
 
+  // TODO: move this to model to avoid this being called twice!
   didSaveRecord: function(record /* , data */ ) {
     var localAdapter, trashStore;
 

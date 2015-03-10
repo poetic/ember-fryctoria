@@ -1,6 +1,10 @@
 <h2>fetchAll</h2>
 <ul id='users'>
   {{#each user in model}}
-  <li>{{user.id}} {{user.name}}</li>
+  <li>
+  {{#link-to 'fetch-by-id' user.id}}
+    {{user.id}} {{user.name}}
+  {{/link-to}}
+  </li>
   {{/each}}
 </ul>
