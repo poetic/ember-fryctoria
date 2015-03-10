@@ -107,21 +107,6 @@ export default DS.Store.extend({
     localAdapter.createRecord(trashStore, modelType, record);
   },
 
-  // TODO: move this to model to avoid this being called twice!
-  didSaveRecord: function(record /* , data */ ) {
-    var localAdapter, trashStore;
-
-    this._super.apply(this, arguments);
-
-    localAdapter = this.get('localAdapter');
-    trashStore   = this.get('trashStore');
-    if(record.get('isDeleted')) {
-      localAdapter.deleteRecord(trashStore, record.constructor, record);
-    } else {
-      localAdapter.createRecord(trashStore, record.constructor, record);
-    }
-  },
-
   // custome property
   useLocalAdapter: false,
 
