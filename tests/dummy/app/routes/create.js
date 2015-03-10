@@ -9,6 +9,14 @@ export default Ember.Route.extend({
   actions: {
     create: function() {
       this.get('controller.model').save();
+    },
+    willTransition: function() {
+      var model = this.get('controller.model');
+      if(model.get('isNew')) {
+        model.deleteRecord();
+      } else {
+        model.rollback();
+      }
     }
   }
 });

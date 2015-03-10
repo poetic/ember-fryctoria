@@ -14,14 +14,16 @@ Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue 
 # TODO:
 1. create an application store
 1. overwrite methods in DS.Store
-  1. fetchAll
-  1. fetchById
-  1. flushPendingSave(?)
-  1. didSaveRecord(?)
-  1. recordWasInvalid(?)
-  1. recordWasError(?)
-  1. createRecord(This does not talk to adapter, we do not care)
-  1. deleteRecord(This is just an alias to Model#deleteRecord, we do not care)
+  1. <del>fetchAll</del>
+  1. <del>fetchById</del>
+  1. <del>didSaveRecord</del>
+  1. <del>createRecord(This does not talk to adapter, we do not care)</del>
+  1. <del>deleteRecord(This is just an alias to Model#deleteRecord, we do not care)</del>
+1. overwrite methods in DS.Model (If connection error, push to local and queue).
+Note: only handle error, since success is handled by didSaveRecord.
+  1. createRecord
+  1. updateRecord
+  1. deleteRecord
 1. add a blueprint for applicaiton store
 
 # Resources:

@@ -15,7 +15,7 @@
   "engines": {
     "node": ">= 0.10.0"
   },
-  "author": "",
+  "author": "Chun Yang",
   "license": "MIT",
   "devDependencies": {
     "body-parser": "^1.12.0",

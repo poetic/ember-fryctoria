@@ -1,6 +1,7 @@
-import DS from 'ember-data';
+import DS        from 'ember-data';
 import LFAdapter from 'ember-localforage-adapter/adapters/localforage';
-import Ember from 'ember';
+import Ember     from 'ember';
+import isOffline from './is-offline';
 
 var Promise = Ember.RSVP.Promise;
 
@@ -144,7 +145,3 @@ export default DS.Store.extend({
     }
   }
 });
-
-function isOffline(status) {
-  return status === 0;
-}
