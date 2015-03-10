@@ -22,9 +22,10 @@ export default DS.Store.extend({
     // this._super can not be called twice, we save the REAL super here
     var _super = this.__nextSuper;
 
-    return _super.call(store, type)
+    return _super.call(this, type)
       .then(function(records) {
-        return store.reloadLocalRecords(type, records);
+        store.reloadLocalRecords(type, records);
+        return records;
       })
       .catch(function(error) {
         if(isOffline(error && error.status)) {
@@ -71,6 +72,36 @@ export default DS.Store.extend({
       });
 
     return records;
+  },
+
+  fetchById: function(type /* , id, preload */ ) {
+    var store      = this;
+    var _super     = this.__nextSuper;
+    var _arguments = arguments;
+
+    return _super.apply(this, _arguments)
+      .then(function(record) {
+        store.createLocalRecord(type, record);
+        return record;
+      })
+      .catch(function(error) {
+        if(isOffline(error && error.status)) {
+          store.changeToOffline();
+          return _super.apply(store, _arguments).then(function(result) {
+            store.changeToOnline();
+            return result;
+          });
+        } else {
+          return Promise.reject(error);
+        }
+      });
+  },
+
+  createLocalRecord: function(type, record) {
+    var localAdapter = this.get('localAdapter');
+    var trashStore   = this.get('trashStore');
+    var modelType    = this.modelFor(type);
+    localAdapter.createRecord(trashStore, modelType, record);
   },
 
   useLocalAdapter: false,
