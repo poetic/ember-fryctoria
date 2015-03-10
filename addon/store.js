@@ -40,6 +40,7 @@ export default DS.Store.extend({
       });
   },
 
+  // custome function
   reloadLocalRecords: function(type, records) {
     var localAdapter = this.get('localAdapter');
     var trashStore   = this.get('trashStore');
@@ -97,6 +98,7 @@ export default DS.Store.extend({
       });
   },
 
+  // custome function
   createLocalRecord: function(type, record) {
     var localAdapter = this.get('localAdapter');
     var trashStore   = this.get('trashStore');
@@ -104,13 +106,33 @@ export default DS.Store.extend({
     localAdapter.createRecord(trashStore, modelType, record);
   },
 
+  didSaveRecord: function(record /* , data */ ) {
+    var localAdapter, trashStore;
+
+    this._super.apply(this, arguments);
+
+    localAdapter = this.get('localAdapter');
+    trashStore   = this.get('trashStore');
+    if(record.get('isDeleted')) {
+      localAdapter.deleteRecord(trashStore, record.constructor, record);
+    } else {
+      localAdapter.createRecord(trashStore, record.constructor, record);
+    }
+  },
+
+  // custome property
   useLocalAdapter: false,
+
+  // custome function
   changeToOffline: function() {
     this.set('useLocalAdapter', true);
   },
+
+  // custome function
   changeToOnline: function() {
     this.set('useLocalAdapter', false);
   },
+
   /**
    * Overwrite adapterFor so that we can use localAdapter when necessary
    */
