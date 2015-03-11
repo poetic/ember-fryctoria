@@ -40,7 +40,7 @@ export default Ember.Object.extend({
       jobs.push({
         operation: operation,
         record:    record,
-        createdAt: new Date(),
+        createdAt: (new Date()).getTime(),
       });
       syncer.setJobs(jobs);
     });
@@ -53,7 +53,7 @@ export default Ember.Object.extend({
 
   },
 
-  runJob: function(job) {
+  runJob: function(/* job */) {
     // TODO: use the store to get the normal adapter
   },
 

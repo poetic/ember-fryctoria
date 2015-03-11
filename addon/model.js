@@ -20,6 +20,7 @@ export default DS.Model.extend({
     function saveLocal(record) {
       var localAdapter = store.get('localAdapter');
       var trashStore   = store.get('trashStore');
+
       if(record.get('isDeleted')) {
         localAdapter.deleteRecord(trashStore, record.constructor, record);
       } else {
@@ -38,6 +39,8 @@ export default DS.Model.extend({
           record.get('store').updateId(record, {id: generateIdForRecord()});
         }
 
+        createJobInSyncer(store.get('syncer'), record);
+
         return _superSave.call(record).then(function(result) {
           store.changeToOnline();
           return result;
@@ -51,4 +54,18 @@ export default DS.Model.extend({
 
 function generateIdForRecord() {
   return Math.random().toString(32).slice(2).substr(0, 5);
+}
+
+function createJobInSyncer(syncer, record) {
+  var operation;
+
+  if(record.get('isNew')) {
+    operation = 'create';
+  } else if(record.get('isDeleted')) {
+    operation = 'delete';
+  } else {
+    operation = 'update';
+  }
+
+  syncer.createJob(operation, record.toJSON({includeId: true}));
 }
