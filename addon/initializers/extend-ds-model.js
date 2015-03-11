@@ -6,6 +6,7 @@ export function initialize(/* container, application */) {
 }
 
 export default {
-  name: 'extend-ds-model',
+  name:       'extend-ds-model',
+  before:     'store',
   initialize: initialize
 };

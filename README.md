@@ -29,7 +29,16 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. Write a service and a queue to run the jobs
 1. Change name: Ember Fryctoria
 1. A logo
+1. move all non-extending functions out of store.js to avoid name collision
+1. rewrite adapterFor so that it detect which adapter we should use by checking
+   a property on type(which is an object). For now we are maintaining a state
+   machine and it is possible that other functions uses that function which is
+   not in that state.
 
 # Resources:
 1. [How ember data store is initialized] (https://github.com/emberjs/data/blob/b8aff0910775f864d6f918ecda1333491a3c001f/packages/ember-data/lib/initializers/store.js)
 2. [Ember Data Store] (https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L107)
+
+# Temp:
+1. refactor model and store, prepare to integrate syncer
+1. add syncer to model

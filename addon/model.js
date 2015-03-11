@@ -9,39 +9,43 @@ export default DS.Model.extend({
    * This method has no params
    */
   save: function() {
-    var record = this;
-    var _super = this.__nextSuper;
-    var store  = this.get('store');
+    var record     = this;
+    var _superSave = this.__nextSuper;
+    var store      = this.get('store');
 
-    return _super.call(record)
-      .then(function(record) {
-        var localAdapter = store.get('localAdapter');
-        var trashStore   = store.get('trashStore');
-        if(record.get('isDeleted')) {
-          localAdapter.deleteRecord(trashStore, record.constructor, record);
-        } else {
-          localAdapter.createRecord(trashStore, record.constructor, record);
+    return _superSave.call(record)
+      .then(saveLocal)
+      .catch(useLocalIfOffline);
+
+    function saveLocal(record) {
+      var localAdapter = store.get('localAdapter');
+      var trashStore   = store.get('trashStore');
+      if(record.get('isDeleted')) {
+        localAdapter.deleteRecord(trashStore, record.constructor, record);
+      } else {
+        localAdapter.createRecord(trashStore, record.constructor, record);
+      }
+
+      return record;
+    }
+
+    function useLocalIfOffline(error) {
+      if(isOffline(error && error.status)) {
+        store.changeToOffline();
+        // make sure record has an id
+        // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
+        if(!record.get('id')) {
+          record.get('store').updateId(record, {id: generateIdForRecord()});
         }
 
-        return record;
-      })
-      .catch(function(error) {
-        if(isOffline(error && error.status)) {
-          store.changeToOffline();
-          // make sure record has an id
-          // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
-          if(!record.get('id')) {
-            record.get('store').updateId(record, {id: generateIdForRecord()});
-          }
-
-          return _super.call(record).then(function(result) {
-            store.changeToOnline();
-            return result;
-          });
-        } else {
-          return Promise.reject(error);
-        }
-      });
+        return _superSave.call(record).then(function(result) {
+          store.changeToOnline();
+          return result;
+        });
+      } else {
+        return Promise.reject(error);
+      }
+    }
   }
 });
 

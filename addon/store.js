@@ -19,26 +19,30 @@ export default DS.Store.extend({
   },
 
   fetchAll: function(type) {
-    var store = this;
     // this._super can not be called twice, we save the REAL super here
-    var _super = this.__nextSuper;
+    var store          = this;
+    var _superFetchAll = this.__nextSuper;
 
-    return _super.call(this, type)
-      .then(function(records) {
-        store.reloadLocalRecords(type, records);
-        return records;
-      })
-      .catch(function(error) {
-        if(isOffline(error && error.status)) {
-          store.changeToOffline();
-          return _super.call(store, type).then(function(result) {
-            store.changeToOnline();
-            return result;
-          });
-        } else {
-          return Promise.reject(error);
-        }
-      });
+    return _superFetchAll.call(this, type)
+      .then(reloadLocalRecords)
+      .catch(useLocalIfOffline);
+
+    function reloadLocalRecords(records) {
+      store.reloadLocalRecords(type, records);
+      return records;
+    }
+
+    function useLocalIfOffline(error) {
+      if(isOffline(error && error.status)) {
+        store.changeToOffline();
+        return _superFetchAll.call(store, type).then(function(result) {
+          store.changeToOnline();
+          return result;
+        });
+      } else {
+        return Promise.reject(error);
+      }
+    }
   },
 
   // custome function
@@ -48,55 +52,61 @@ export default DS.Store.extend({
     var modelType    = this.modelFor(type);
 
     localAdapter.findAll(trashStore, modelType)
-      .then(function(previousRecords) {
-        // delete all
-        return previousRecords.map(function(rawRecord) {
-          var record = Ember.Object.create(rawRecord);
-          return localAdapter.deleteRecord(trashStore, modelType, record);
-        });
-      })
-      .then(function(previousRecords) {
-        // create all
-        Promise.all(previousRecords).then(function() {
-          records.forEach(function(record) {
-            if(record.get('id')) {
-              localAdapter.createRecord(trashStore, modelType, record);
-            } else {
-              var recordName = record.constructor && record.constructor.typeKey;
-              var recordData = record.toJSON && record.toJSON();
-              Ember.Logger.warn(
-                'Record ' + recordName + ' does not have an id: ',
-                recordData
-              );
-            }
-          });
-        });
-      });
+      .then(deleteAll)
+      .then(createAll);
 
     return records;
+
+    function deleteAll(previousRecords) {
+      return previousRecords.map(function(rawRecord) {
+        var record = Ember.Object.create(rawRecord);
+        return localAdapter.deleteRecord(trashStore, modelType, record);
+      });
+    }
+
+    function createAll(previousRecords) {
+      Promise.all(previousRecords).then(function() {
+        records.forEach(function(record) {
+          if(record.get('id')) {
+            localAdapter.createRecord(trashStore, modelType, record);
+          } else {
+            var recordName = record.constructor && record.constructor.typeKey;
+            var recordData = record.toJSON && record.toJSON();
+            Ember.Logger.warn(
+              'Record ' + recordName + ' does not have an id: ',
+              recordData
+            );
+          }
+        });
+      });
+    }
   },
 
   fetchById: function(type /* , id, preload */ ) {
-    var store      = this;
-    var _super     = this.__nextSuper;
-    var _arguments = arguments;
+    var store           = this;
+    var _superFetchById = this.__nextSuper;
+    var _arguments      = arguments;
 
-    return _super.apply(this, _arguments)
-      .then(function(record) {
-        store.createLocalRecord(type, record);
-        return record;
-      })
-      .catch(function(error) {
-        if(isOffline(error && error.status)) {
-          store.changeToOffline();
-          return _super.apply(store, _arguments).then(function(result) {
-            store.changeToOnline();
-            return result;
-          });
-        } else {
-          return Promise.reject(error);
-        }
-      });
+    return _superFetchById.apply(this, _arguments)
+      .then(createLocalRecord)
+      .catch(useLocalIfOffline);
+
+    function createLocalRecord(record) {
+      store.createLocalRecord(type, record);
+      return record;
+    }
+
+    function useLocalIfOffline(error) {
+      if(isOffline(error && error.status)) {
+        store.changeToOffline();
+        return _superFetchById.apply(store, _arguments).then(function(result) {
+          store.changeToOnline();
+          return result;
+        });
+      } else {
+        return Promise.reject(error);
+      }
+    }
   },
 
   // custome function
@@ -122,6 +132,12 @@ export default DS.Store.extend({
 
   /**
    * Overwrite adapterFor so that we can use localAdapter when necessary
+   *
+   * TODO:
+   * rewrite adapterFor so that it detect which adapter we should use by checking
+   * a property on type(which is an object). For now we are maintaining a state
+   * machine and it is possible that other functions uses that function which is
+   * not in that state.
    */
   adapterFor: function() {
     if(this.get('useLocalAdapter')) {
