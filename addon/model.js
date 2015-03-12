@@ -57,6 +57,7 @@ function generateIdForRecord() {
 }
 
 function createJobInSyncer(syncer, record) {
+  var typeName = record.constructor.typeKey;
   var operation;
 
   if(record.get('isNew')) {
@@ -67,5 +68,5 @@ function createJobInSyncer(syncer, record) {
     operation = 'update';
   }
 
-  syncer.createJob(operation, record.toJSON({includeId: true}));
+  syncer.createJob(operation, typeName, record.toJSON({includeId: true}));
 }
