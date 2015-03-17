@@ -1,6 +1,7 @@
-import DS        from 'ember-data';
-import isOffline from './is-offline';
-import Ember     from 'ember';
+import DS               from 'ember-data';
+import isOffline        from './is-offline';
+import generateUniqueId from './generate-unique-id';
+import Ember            from 'ember';
 
 var Promise = Ember.RSVP.Promise;
 
@@ -36,7 +37,7 @@ export default DS.Model.extend({
         // make sure record has an id
         // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
         if(!record.get('id')) {
-          record.get('store').updateId(record, {id: generateIdForRecord()});
+          record.get('store').updateId(record, {id: generateUniqueId()});
         }
 
         createJobInSyncer(store.get('syncer'), record);
@@ -51,10 +52,6 @@ export default DS.Model.extend({
     }
   }
 });
-
-function generateIdForRecord() {
-  return Math.random().toString(32).slice(2).substr(0, 5);
-}
 
 function createJobInSyncer(syncer, record) {
   var typeName = record.constructor.typeKey;

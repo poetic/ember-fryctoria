@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import isOffline from './is-offline';
+import generateUniqueId from './generate-unique-id';
 
 var Promise = Ember.RSVP.Promise;
 
@@ -8,6 +9,7 @@ var Promise = Ember.RSVP.Promise;
  *
  * Job schema:
  * {
+ *   id:        { String },
  *   operation: { 'create'|'update'|'delete' },
  *   typeName:  { String },
  *   record:    { Object },
@@ -42,6 +44,7 @@ export default Ember.Object.extend({
 
     syncer.getJobs().then(function(jobs) {
       jobs.push({
+        id:        generateUniqueId(),
         operation: operation,
         typeName:  typeName,
         record:    record,
@@ -91,22 +94,42 @@ export default Ember.Object.extend({
   runJob: function(job) {
     // TODO: use the store to get the normal adapter
     // remove the job from localforage when done
+    var syncer = this;
     var operation = job.operation;
     var typeName = job.typeName;
     var recordJSON = job.record;
     var store = this.getStore();
+    var trashStore = store.get('trashStore');
     var type, record;
+
+    var syncedRecord;
 
     if(operation === 'delete') {
       type = store.modelFor(typeName);
       record = type._create({
         id:        recordJSON.id,
-        store:     store.get('trashStore'),
+        store:     trashStore,
         container: this.get('container'),
       });
-      return this.adapterFor(type)
-        .deleteRecord(store.get('trashStore'), type, record);
+
+      syncedRecord = this.adapterFor(type)
+        .deleteRecord(trashStore, type, record);
+
+    } else if(operation === 'update') {
+      // for now, we do not accept 'reverse update' i.e. update from the server
+      // will not be reflected in the store
+
     }
+
+    // delete from db after syncing success
+    return syncedRecord.then(function() {
+      syncer.getJobs().then(function(jobs) {
+        jobs = jobs.filter(function(jobInDB) {
+          return job.id !== jobInDB.id;
+        });
+        syncer.setJobs(jobs);
+      });
+    });
   },
 
   adapterFor: function(typeName) {
