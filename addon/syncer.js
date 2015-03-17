@@ -148,7 +148,8 @@ export default Ember.Object.extend({
           );
           var recordInStore = store.getById(typeName, record.get('id'));
 
-          // TODO: check if this works for relationships?
+          // WARN: This works for relationships too!
+          // This means ember data relationship does not depend on id!
           recordInStore.set('id', null);
           store.updateId(recordInStore, recordExtracted);
         });

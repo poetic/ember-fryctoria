@@ -36,7 +36,7 @@
     "ember-localforage-adapter": "0.6.7",
     "express": "^4.8.5",
     "glob": "^4.0.5",
-    "morgan": "^1.5.1"
+    "morgan": "^1.5.2"
   },
   "keywords": [
     "ember-addon",
