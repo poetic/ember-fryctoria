@@ -1,3 +1,3 @@
 module.exports = {
-  description: 'Generates application store which extends from IceSyncStore.'
+  description: 'Generates application store which extends from FryctoriaStore.'
 };

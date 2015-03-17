@@ -1,13 +1,13 @@
 # Instruction
 ### Step1: Install the addon.
 ```bash
-ember addon:install ember-ice-sync
+ember addon:install ember-fryctoria
 ```
 ### Step2: Offline!
 
 
 # How does it work?
-IceSync extends the ember [data store](http://emberjs.com/api/data/classes/DS.Store.html).
+ember-fryctoria extends the ember [data store](http://emberjs.com/api/data/classes/DS.Store.html).
 It utilizes [ember-localforage-adapter](https://github.com/genkgo/ember-localforage-adapter/) to read and write locally.
 Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue of jobs when the user create, update or delete in offline mode. When online we flush this queue to keep the server in sync.
 

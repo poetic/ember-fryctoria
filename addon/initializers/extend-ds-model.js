@@ -1,8 +1,8 @@
 import DS from 'ember-data';
-import IceModel from '../model';
+import FryctoriaModel from '../model';
 
 export function initialize(/* container, application */) {
-  DS.set('Model', IceModel);
+  DS.set('Model', FryctoriaModel);
 }
 
 export default {

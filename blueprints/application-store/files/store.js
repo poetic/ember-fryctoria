@@ -1,5 +1,5 @@
-import IceSyncStore from 'ember-ice-sync/store';
+import FryctoriaStore from 'ember-fryctoria/store';
 
-export default IceSyncStore.extend({
+export default FryctoriaStore.extend({
 });
 
