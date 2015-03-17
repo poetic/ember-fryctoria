@@ -94,31 +94,40 @@ export default Ember.Object.extend({
   runJob: function(job) {
     // TODO: use the store to get the normal adapter
     // remove the job from localforage when done
-    var syncer = this;
-    var operation = job.operation;
-    var typeName = job.typeName;
+    var syncer     = this;
+    var operation  = job.operation;
+    var typeName   = job.typeName;
     var recordJSON = job.record;
-    var store = this.getStore();
+    var store      = syncer.getStore();
     var trashStore = store.get('trashStore');
-    var type, record;
+    var type       = store.modelFor(typeName);
 
-    var syncedRecord;
+    var record, syncedRecord;
 
     if(operation === 'delete') {
-      type = store.modelFor(typeName);
       record = type._create({
         id:        recordJSON.id,
         store:     trashStore,
-        container: this.get('container'),
+        container: syncer.get('container'),
       });
 
-      syncedRecord = this.adapterFor(type)
+      syncedRecord = syncer.adapterFor(type)
         .deleteRecord(trashStore, type, record);
 
     } else if(operation === 'update') {
+      // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
+      record = type._create({
+        id:        recordJSON.id,
+        store:     trashStore,
+        container: syncer.get('container'),
+      });
 
+      record.setupData(recordJSON);
+
+      syncedRecord = syncer.adapterFor(type)
+        .updateRecord(trashStore, type, record);
     }
 
     // delete from db after syncing success
@@ -127,7 +136,7 @@ export default Ember.Object.extend({
         jobs = jobs.filter(function(jobInDB) {
           return job.id !== jobInDB.id;
         });
-        syncer.setJobs(jobs);
+        return syncer.setJobs(jobs);
       });
     });
   },
