@@ -92,13 +92,12 @@ export default Ember.Object.extend({
   },
 
   runJob: function(job) {
-    // TODO: use the store to get the normal adapter
-    // remove the job from localforage when done
     var syncer     = this;
     var operation  = job.operation;
     var typeName   = job.typeName;
     var recordJSON = job.record;
     var store      = syncer.getStore();
+    var container  = syncer.get('container');
     var trashStore = store.get('trashStore');
     var type       = store.modelFor(typeName);
 
@@ -108,7 +107,7 @@ export default Ember.Object.extend({
       record = type._create({
         id:        recordJSON.id,
         store:     trashStore,
-        container: syncer.get('container'),
+        container: container,
       });
 
       syncedRecord = syncer.adapterFor(type)
@@ -121,13 +120,38 @@ export default Ember.Object.extend({
       record = type._create({
         id:        recordJSON.id,
         store:     trashStore,
-        container: syncer.get('container'),
+        container: container,
       });
 
       record.setupData(recordJSON);
 
       syncedRecord = syncer.adapterFor(type)
         .updateRecord(trashStore, type, record);
+    } else if(operation === 'create') {
+      // TODO: make reverse update possible
+      // for now, we do not accept 'reverse update' i.e. update from the server
+      // will not be reflected in the store
+      record = type._create({
+        id:        recordJSON.id,
+        store:     trashStore,
+        container: container,
+      });
+
+      record.setupData(recordJSON);
+
+      syncedRecord = syncer.adapterFor(type)
+        .createRecord(trashStore, type, record)
+        .then(function(payload) {
+          var serializer      = store.serializerFor(type);
+          var recordExtracted = serializer.extract(
+            trashStore, type, payload, record.get('id'), 'single'
+          );
+          var recordInStore = store.getById(typeName, record.get('id'));
+
+          // TODO: check if this works for relationships?
+          recordInStore.set('id', null);
+          store.updateId(recordInStore, recordExtracted);
+        });
     }
 
     // delete from db after syncing success
