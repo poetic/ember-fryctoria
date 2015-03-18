@@ -43,3 +43,8 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 # Temp:
 1. refactor model and store, prepare to integrate syncer
 1. add syncer to model
+
+# TODO:
+1. Sideload (manul save to local)
+1. Do syncing periodically or check if online
+1. Refresh local data after create or update

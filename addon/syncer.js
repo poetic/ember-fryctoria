@@ -2,7 +2,7 @@ import Ember from 'ember';
 import isOffline from './is-offline';
 import generateUniqueId from './generate-unique-id';
 
-var Promise = Ember.RSVP.Promise;
+var RSVP = Ember.RSVP;
 
 /**
  * We save offline jobs to localforage and run them one at a time
@@ -50,7 +50,8 @@ export default Ember.Object.extend({
         record:    record,
         createdAt: (new Date()).getTime(),
       });
-      syncer.setJobs(jobs);
+
+      return syncer.setJobs(jobs);
     });
   },
 
@@ -74,7 +75,7 @@ export default Ember.Object.extend({
         return acc.then(function() {
           return syncer.runJob(job);
         });
-      }, Promise.resolve())
+      }, RSVP.resolve())
 
       .then(function() {
         Ember.Logger.info('Syncing succeed.');
@@ -85,7 +86,7 @@ export default Ember.Object.extend({
           Ember.Logger.info('Can not connect to server, stop syncing');
           return;
         } else {
-          return Promise.reject(error);
+          return RSVP.reject(error);
         }
       });
     });
@@ -127,6 +128,7 @@ export default Ember.Object.extend({
 
       syncedRecord = syncer.adapterFor(type)
         .updateRecord(trashStore, type, record);
+
     } else if(operation === 'create') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
@@ -148,22 +150,20 @@ export default Ember.Object.extend({
           );
           var recordInStore = store.getById(typeName, record.get('id'));
 
-          // WARN: This works for relationships too!
-          // This means ember data relationship does not depend on id!
-          recordInStore.set('id', null);
-          store.updateId(recordInStore, recordExtracted);
+          // WARN: This works for relationships too
+          // This means ember data relationship does not depend on id
+          // WARN: recordInStore may be null because it may be deleted
+          if(recordInStore) {
+            recordInStore.set('id', null);
+            store.updateId(recordInStore, recordExtracted);
+          }
         });
     }
 
     // delete from db after syncing success
-    return syncedRecord.then(function() {
-      syncer.getJobs().then(function(jobs) {
-        jobs = jobs.filter(function(jobInDB) {
-          return job.id !== jobInDB.id;
-        });
-        return syncer.setJobs(jobs);
-      });
-    });
+    return syncedRecord.then(
+      syncer.deleteJobById.bind(this, job.id)
+    );
   },
 
   adapterFor: function(typeName) {
@@ -176,12 +176,22 @@ export default Ember.Object.extend({
 
   namespace: 'EmberFryctoriaJobs',
 
-  // low level functions that talk to localforage
+  // database crud
+  deleteJobById: function(id) {
+    var syncer = this;
+
+    return syncer.getJobs().then(function(jobs) {
+      jobs = jobs.filter(function(job) {
+        return id !== job.id;
+      });
+      return syncer.setJobs(jobs);
+    });
+  },
 
   getJobs: function() {
-    return this.get('db').getItem(this.get('namespace')).then(function(jobs) {
-      return jobs || [];
-    });
+    return this.get('db')
+               .getItem(this.get('namespace'))
+               .then(function(jobs) { return jobs || []; });
   },
 
   setJobs: function(jobs) {
