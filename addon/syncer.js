@@ -94,76 +94,66 @@ export default Ember.Object.extend({
 
   runJob: function(job) {
     var syncer     = this;
-    var operation  = job.operation;
-    var typeName   = job.typeName;
-    var recordJSON = job.record;
+
     var store      = syncer.getStore();
-    var container  = syncer.get('container');
     var trashStore = store.get('trashStore');
+
+    var typeName   = job.typeName;
     var type       = store.modelFor(typeName);
 
-    var record, syncedRecord;
+    var adapter    = syncer.adapterFor(type);
+
+    var recordJSON = job.record;
+    var record     = createRecordInTrashStore();
+    record.setupData(recordJSON);
+
+    var operation  = job.operation;
+    var syncedRecord;
 
     if(operation === 'delete') {
-      record = type._create({
-        id:        recordJSON.id,
-        store:     trashStore,
-        container: container,
-      });
-
-      syncedRecord = syncer.adapterFor(type)
-        .deleteRecord(trashStore, type, record);
+      syncedRecord = adapter.deleteRecord(trashStore, type, record);
 
     } else if(operation === 'update') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
-      record = type._create({
-        id:        recordJSON.id,
-        store:     trashStore,
-        container: container,
-      });
-
-      record.setupData(recordJSON);
-
-      syncedRecord = syncer.adapterFor(type)
-        .updateRecord(trashStore, type, record);
+      syncedRecord = adapter.updateRecord(trashStore, type, record);
 
     } else if(operation === 'create') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
-      record = type._create({
-        id:        recordJSON.id,
-        store:     trashStore,
-        container: container,
-      });
-
-      record.setupData(recordJSON);
-
-      syncedRecord = syncer.adapterFor(type)
-        .createRecord(trashStore, type, record)
-        .then(function(payload) {
-          var serializer      = store.serializerFor(type);
-          var recordExtracted = serializer.extract(
-            trashStore, type, payload, record.get('id'), 'single'
-          );
-          var recordInStore = store.getById(typeName, record.get('id'));
-
-          // WARN: This works for relationships too
-          // This means ember data relationship does not depend on id
-          // WARN: recordInStore may be null because it may be deleted
-          if(recordInStore) {
-            recordInStore.set('id', null);
-            store.updateId(recordInStore, recordExtracted);
-          }
-        });
+      syncedRecord = adapter.createRecord(trashStore, type, record)
+        .then(updateIdInStore);
     }
 
     // delete from db after syncing success
     return syncedRecord.then(
       syncer.deleteJobById.bind(this, job.id)
     );
+
+    function createRecordInTrashStore() {
+      return type._create({
+        id:        recordJSON.id,
+        store:     trashStore,
+        container: syncer.get('container'),
+      });
+    }
+
+    function updateIdInStore(payload) {
+      var recordExtracted = store.serializerFor(type).extract(
+        trashStore, type, payload, record.get('id'), 'single'
+      );
+
+      var recordInStore = store.getById(typeName, record.get('id'));
+
+      // INFO: recordInStore may be null because it may be deleted
+      // INFO: This works for relationships too
+      if(recordInStore) {
+        recordInStore.set('id', null);
+        store.updateId(recordInStore, recordExtracted);
+      }
+    }
   },
 
   adapterFor: function(typeName) {
