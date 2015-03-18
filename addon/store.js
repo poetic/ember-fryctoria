@@ -22,26 +22,17 @@ export default DS.Store.extend({
     // this._super can not be called twice, we save the REAL super here
     var store          = this;
     var _superFetchAll = this.__nextSuper;
+    var _arguments     = arguments;
 
     return _superFetchAll.call(this, type)
       .then(reloadLocalRecords)
-      .catch(useLocalIfOffline);
+      .catch(function(error) {
+        return useLocalIfOffline(error, store, _superFetchAll, _arguments);
+      });
 
     function reloadLocalRecords(records) {
       store.reloadLocalRecords(type, records);
       return records;
-    }
-
-    function useLocalIfOffline(error) {
-      if(isOffline(error && error.status)) {
-        store.changeToOffline();
-        return _superFetchAll.call(store, type).then(function(result) {
-          store.changeToOnline();
-          return result;
-        });
-      } else {
-        return Promise.reject(error);
-      }
     }
   },
 
@@ -89,23 +80,13 @@ export default DS.Store.extend({
 
     return _superFetchById.apply(this, _arguments)
       .then(createLocalRecord)
-      .catch(useLocalIfOffline);
+      .catch(function(error) {
+        return useLocalIfOffline(error, store, _superFetchById, _arguments);
+      });
 
     function createLocalRecord(record) {
       store.createLocalRecord(type, record);
       return record;
-    }
-
-    function useLocalIfOffline(error) {
-      if(isOffline(error && error.status)) {
-        store.changeToOffline();
-        return _superFetchById.apply(store, _arguments).then(function(result) {
-          store.changeToOnline();
-          return result;
-        });
-      } else {
-        return Promise.reject(error);
-      }
     }
   },
 
@@ -147,3 +128,21 @@ export default DS.Store.extend({
     }
   }
 });
+
+function useLocalIfOffline(error, store, _superFn, _arguments) {
+  if(isOffline(error && error.status)) {
+    store.changeToOffline();
+    return _superFn.apply(store, _arguments).then(
+      function(result) {
+        store.changeToOnline();
+        return result;
+      },
+      function(error) {
+        store.changeToOnline();
+        return Promise.reject(error);
+      }
+    );
+  } else {
+    return Promise.reject(error);
+  }
+}
