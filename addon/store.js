@@ -30,49 +30,12 @@ export default DS.Store.extend({
         return _superFetchAll.call(store, type);
       })
       .then(function(records) {
-        store.reloadLocalRecords(type, records);
+        reloadLocalRecords(store, type, records);
         return records;
       })
       .catch(function(error) {
         return useLocalIfOffline(error, store, _superFetchAll, _arguments);
       });
-  },
-
-  // custome function
-  reloadLocalRecords: function(type, records) {
-    var localAdapter = this.get('localAdapter');
-    var trashStore   = this.get('trashStore');
-    var modelType    = this.modelFor(type);
-
-    localAdapter.findAll(trashStore, modelType)
-      .then(deleteAll)
-      .then(createAll);
-
-    return records;
-
-    function deleteAll(previousRecords) {
-      return previousRecords.map(function(rawRecord) {
-        var record = Ember.Object.create(rawRecord);
-        return localAdapter.deleteRecord(trashStore, modelType, record);
-      });
-    }
-
-    function createAll(previousRecords) {
-      Promise.all(previousRecords).then(function() {
-        records.forEach(function(record) {
-          if(record.get('id')) {
-            localAdapter.createRecord(trashStore, modelType, record);
-          } else {
-            var recordName = record.constructor && record.constructor.typeKey;
-            var recordData = record.toJSON && record.toJSON();
-            Ember.Logger.warn(
-              'Record ' + recordName + ' does not have an id: ',
-              recordData
-            );
-          }
-        });
-      });
-    }
   },
 
   fetchById: function(type /* , id, preload */ ) {
@@ -82,23 +45,15 @@ export default DS.Store.extend({
 
     return syncToServer(store)
       .then(function() {
-        return _superFetchById.apply(this, _arguments)
+        return _superFetchById.apply(this, _arguments);
       })
       .then(function(record) {
-        store.createLocalRecord(type, record);
+        createLocalRecord(store, type, record);
         return record;
       })
       .catch(function(error) {
         return useLocalIfOffline(error, store, _superFetchById, _arguments);
       });
-  },
-
-  // custome function
-  createLocalRecord: function(type, record) {
-    var localAdapter = this.get('localAdapter');
-    var trashStore   = this.get('trashStore');
-    var modelType    = this.modelFor(type);
-    localAdapter.createRecord(trashStore, modelType, record);
   },
 
   // custome property
@@ -156,3 +111,47 @@ function syncToServer(store) {
     Ember.Logger.error(error && error.stack);
   });
 }
+
+function reloadLocalRecords(store, type, records) {
+  var localAdapter = store.get('localAdapter');
+  var trashStore   = store.get('trashStore');
+  var modelType    = store.modelFor(type);
+
+  localAdapter.findAll(trashStore, modelType)
+    .then(deleteAll)
+    .then(createAll);
+
+  return records;
+
+  function deleteAll(previousRecords) {
+    return previousRecords.map(function(rawRecord) {
+      var record = Ember.Object.create(rawRecord);
+      return localAdapter.deleteRecord(trashStore, modelType, record);
+    });
+  }
+
+  function createAll(previousRecords) {
+    Promise.all(previousRecords).then(function() {
+      records.forEach(function(record) {
+        if(record.get('id')) {
+          localAdapter.createRecord(trashStore, modelType, record);
+        } else {
+          var recordName = record.constructor && record.constructor.typeKey;
+          var recordData = record.toJSON && record.toJSON();
+          Ember.Logger.warn(
+            'Record ' + recordName + ' does not have an id: ',
+            recordData
+          );
+        }
+      });
+    });
+  }
+}
+
+function createLocalRecord(store, type, record) {
+  var localAdapter = store.get('localAdapter');
+  var trashStore   = store.get('trashStore');
+  var modelType    = store.modelFor(type);
+  localAdapter.createRecord(trashStore, modelType, record);
+}
+
