@@ -29,6 +29,9 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Write a service and a queue to run the jobs</del>
 1. <del>Change name: Ember Fryctoria</del>
 1. <del>Think of a mechanisem to do syncing</del>
+1. <del>Perf, cached jobs in syncer</del>
+1. Use configuration to turn on and off logging info
+1. Namespace all custome stuff or put them into functions
 1. Support findQuery
 1. Write tests
 1. A logo

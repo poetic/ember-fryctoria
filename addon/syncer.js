@@ -22,15 +22,12 @@ export default Ember.Object.extend({
 
     syncer.set('db', window.localforage);
 
-    // TODO
-    // attampt to runAllJobs periodically
-    // check if it is back online and then runAllJobs
+    // initialize jobs cache in syncer
+    // jobs may be used before we fetch jobs from localforage
+    syncer.set('jobs', []);
 
-    // initialize localforage, make sure 'FryctoriaSyncer' is an array
-    return syncer.getJobs().then(function(jobs) {
-      if(!(jobs instanceof Array)) {
-        return syncer.setJobs([]);
-      }
+    return syncer.fetchJobs().then(function(jobs) {
+      syncer.set('jobs', jobs);
     });
   },
 
@@ -41,18 +38,17 @@ export default Ember.Object.extend({
    */
   createJob: function(operation, typeName, record) {
     var syncer = this;
+    var jobs = this.get('jobs');
 
-    syncer.getJobs().then(function(jobs) {
-      jobs.push({
-        id:        generateUniqueId(),
-        operation: operation,
-        typeName:  typeName,
-        record:    record,
-        createdAt: (new Date()).getTime(),
-      });
-
-      return syncer.setJobs(jobs);
+    jobs.pushObject({
+      id:        generateUniqueId(),
+      operation: operation,
+      typeName:  typeName,
+      record:    record,
+      createdAt: (new Date()).getTime(),
     });
+
+    return syncer.persistJobs(jobs);
   },
 
   /**
@@ -60,35 +56,34 @@ export default Ember.Object.extend({
    */
   runAllJobs: function() {
     var syncer = this;
+    var jobs = this.get('jobs');
 
-    return syncer.getJobs().then(function(jobs) {
-      if(jobs.length === 0) {
-        Ember.Logger.info('Syncing jobs are empty.');
-        return;
-      }
+    if(jobs.length === 0) {
+      Ember.Logger.info('Syncing jobs are empty.');
+      return RSVP.resolve();
+    }
 
-      Ember.Logger.info('Syncing started.');
-      jobs = jobs.sortBy('createdAt');
+    Ember.Logger.info('Syncing started.');
+    jobs = jobs.sortBy('createdAt');
 
-      // run jobs one at a time
-      return jobs.reduce(function(acc, job) {
-        return acc.then(function() {
-          return syncer.runJob(job);
-        });
-      }, RSVP.resolve())
-
-      .then(function() {
-        Ember.Logger.info('Syncing succeed.');
-      })
-
-      .catch(function(error) {
-        if(isOffline(error && error.status)) {
-          Ember.Logger.info('Can not connect to server, stop syncing');
-          return;
-        } else {
-          return RSVP.reject(error);
-        }
+    // run jobs one at a time
+    return jobs.reduce(function(acc, job) {
+      return acc.then(function() {
+        return syncer.runJob(job);
       });
+    }, RSVP.resolve())
+
+    .then(function() {
+      Ember.Logger.info('Syncing succeed.');
+    })
+
+    .catch(function(error) {
+      if(isOffline(error && error.status)) {
+        Ember.Logger.info('Can not connect to server, stop syncing');
+        return;
+      } else {
+        return RSVP.reject(error);
+      }
     });
   },
 
@@ -169,22 +164,24 @@ export default Ember.Object.extend({
   // database crud
   deleteJobById: function(id) {
     var syncer = this;
+    var jobs = this.get('jobs');
 
-    return syncer.getJobs().then(function(jobs) {
-      jobs = jobs.filter(function(job) {
-        return id !== job.id;
-      });
-      return syncer.setJobs(jobs);
+    jobs = jobs.filter(function(job) {
+      return id !== job.id;
     });
+
+    // TODO: use popObject which is more performant
+    syncer.set('jobs', jobs);
+    return syncer.persistJobs(jobs);
   },
 
-  getJobs: function() {
+  fetchJobs: function() {
     return this.get('db')
                .getItem(this.get('namespace'))
                .then(function(jobs) { return jobs || []; });
   },
 
-  setJobs: function(jobs) {
+  persistJobs: function(jobs) {
     return this.get('db').setItem(this.get('namespace'), jobs);
   },
 });
