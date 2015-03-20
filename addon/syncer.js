@@ -91,7 +91,7 @@ export default Ember.Object.extend({
     var syncer     = this;
 
     var store      = syncer.getStore();
-    var trashStore = store.get('trashStore');
+    var trashStore = store.get('fryctoria.trashStore');
 
     var typeName   = job.typeName;
     var type       = store.modelFor(typeName);

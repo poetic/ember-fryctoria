@@ -6,14 +6,18 @@ import isOffline from './is-offline';
 var Promise = Ember.RSVP.Promise;
 
 export default DS.Store.extend({
+  fryctoria: {
+    useLocalAdapter: false,
+    localAdapter:    null,
+    trashStore:      null,
+  },
+
   init: function() {
     var localAdapter = LFAdapter.create({ container: this.get('container') });
-    var trashStore   = DS.Store.extend({
-        adapter:   this.get('localAdapter'),
-        container: this.get('container')
-      }).create();
-    this.set('localAdapter', localAdapter);
-    this.set('trashStore',   trashStore);
+    var trashStore   = DS.Store.extend({ container: this.get('container') }).create();
+
+    this.set('fryctoria.localAdapter', localAdapter);
+    this.set('fryctoria.trashStore',   trashStore);
 
     this._super.apply(this, arguments);
   },
@@ -56,19 +60,6 @@ export default DS.Store.extend({
       });
   },
 
-  // custome property
-  useLocalAdapter: false,
-
-  // custome function
-  changeToOffline: function() {
-    this.set('useLocalAdapter', true);
-  },
-
-  // custome function
-  changeToOnline: function() {
-    this.set('useLocalAdapter', false);
-  },
-
   /**
    * Overwrite adapterFor so that we can use localAdapter when necessary
    *
@@ -78,25 +69,25 @@ export default DS.Store.extend({
    * machine and it is possible that other functions uses that function which is
    * not in that state.
    */
-  adapterFor: function() {
-    if(this.get('useLocalAdapter')) {
-      return this.get('localAdapter');
+  adapterFor: function(type) {
+    if(this.get('fryctoria.useLocalAdapter')) {
+      return this.get('fryctoria.localAdapter');
     } else {
-      return this._super.apply(this, arguments);
+      return this._super.call(this, type);
     }
   }
 });
 
 function useLocalIfOffline(error, store, _superFn, _arguments) {
   if(isOffline(error && error.status)) {
-    store.changeToOffline();
+    store.set('fryctoria.useLocalAdapter', true);
     return _superFn.apply(store, _arguments).then(
       function(result) {
-        store.changeToOnline();
+        store.set('fryctoria.useLocalAdapter', false);
         return result;
       },
       function(error) {
-        store.changeToOnline();
+        store.set('fryctoria.useLocalAdapter', false);
         return Promise.reject(error);
       }
     );
@@ -113,8 +104,8 @@ function syncToServer(store) {
 }
 
 function reloadLocalRecords(store, type, records) {
-  var localAdapter = store.get('localAdapter');
-  var trashStore   = store.get('trashStore');
+  var localAdapter = store.get('fryctoria.localAdapter');
+  var trashStore   = store.get('fryctoria.trashStore');
   var modelType    = store.modelFor(type);
 
   localAdapter.findAll(trashStore, modelType)
@@ -149,8 +140,8 @@ function reloadLocalRecords(store, type, records) {
 }
 
 function createLocalRecord(store, type, record) {
-  var localAdapter = store.get('localAdapter');
-  var trashStore   = store.get('trashStore');
+  var localAdapter = store.get('fryctoria.localAdapter');
+  var trashStore   = store.get('fryctoria.trashStore');
   var modelType    = store.modelFor(type);
   localAdapter.createRecord(trashStore, modelType, record);
 }

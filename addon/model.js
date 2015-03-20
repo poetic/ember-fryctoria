@@ -19,8 +19,8 @@ export default DS.Model.extend({
       .catch(useLocalIfOffline);
 
     function saveLocal(record) {
-      var localAdapter = store.get('localAdapter');
-      var trashStore   = store.get('trashStore');
+      var localAdapter = store.get('fryctoria.localAdapter');
+      var trashStore   = store.get('fryctoria.trashStore');
 
       if(record.get('isDeleted')) {
         localAdapter.deleteRecord(trashStore, record.constructor, record);
@@ -33,7 +33,7 @@ export default DS.Model.extend({
 
     function useLocalIfOffline(error) {
       if(isOffline(error && error.status)) {
-        store.changeToOffline();
+        store.set('fryctoria.useLocalAdapter', true);
         // make sure record has an id
         // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
         if(!record.get('id')) {
@@ -43,7 +43,7 @@ export default DS.Model.extend({
         createJobInSyncer(store.get('syncer'), record);
 
         return _superSave.call(record).then(function(result) {
-          store.changeToOnline();
+          store.set('fryctoria.useLocalAdapter', false);
           return result;
         });
       } else {
