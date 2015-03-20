@@ -28,7 +28,9 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>save offline jobs to a queue</del>
 1. <del>Write a service and a queue to run the jobs</del>
 1. <del>Change name: Ember Fryctoria</del>
-1. Think of a mechanisem to do syncing
+1. <del>Think of a mechanisem to do syncing</del>
+1. Support findQuery
+1. Write tests
 1. A logo
 1. move all non-extending functions out of store.js to avoid name collision
 1. rewrite adapterFor so that it detect which adapter we should use by checking

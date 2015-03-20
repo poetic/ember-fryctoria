@@ -25,15 +25,16 @@ export default DS.Store.extend({
     var _arguments     = arguments;
 
     return _superFetchAll.call(this, type)
-      .then(reloadLocalRecords)
+      .then(function(records) {
+        store.reloadLocalRecords(type, records);
+        return records;
+      })
+      .then(function(records) {
+        return syncToServer(store, records);
+      })
       .catch(function(error) {
         return useLocalIfOffline(error, store, _superFetchAll, _arguments);
       });
-
-    function reloadLocalRecords(records) {
-      store.reloadLocalRecords(type, records);
-      return records;
-    }
   },
 
   // custome function
@@ -79,15 +80,16 @@ export default DS.Store.extend({
     var _arguments      = arguments;
 
     return _superFetchById.apply(this, _arguments)
-      .then(createLocalRecord)
+      .then(function(record) {
+        store.createLocalRecord(type, record);
+        return record;
+      })
+      .then(function(record) {
+        return syncToServer(store, record);
+      })
       .catch(function(error) {
         return useLocalIfOffline(error, store, _superFetchById, _arguments);
       });
-
-    function createLocalRecord(record) {
-      store.createLocalRecord(type, record);
-      return record;
-    }
   },
 
   // custome function
@@ -145,4 +147,17 @@ function useLocalIfOffline(error, store, _superFn, _arguments) {
   } else {
     return Promise.reject(error);
   }
+}
+
+// we return the records no matter the sync succeed or fail
+function syncToServer(store, records) {
+  return store.syncer.runAllJobs().then(
+      function() {
+        return records;
+      },
+      function(error) {
+        Ember.Logger.error(error && error.stack);
+        return records;
+      }
+    );
 }
