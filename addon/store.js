@@ -49,7 +49,7 @@ export default DS.Store.extend({
 
     return syncToServer(store)
       .then(function() {
-        return _superFetchById.apply(this, _arguments);
+        return _superFetchById.apply(store, _arguments);
       })
       .then(function(record) {
         createLocalRecord(store, type, record);

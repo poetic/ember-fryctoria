@@ -31,17 +31,17 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Think of a mechanisem to do syncing</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
+1. Write tests
+1. TODO: use property on type to determine which adapter to use(This works!)
+1. TODO: add local-forage as a dependency
 1. fork ember-localforage-adapter, remove warning
 1. Use configuration to turn on and off logging info
+1. Support different serializers
 1. Support findQuery
-1. Write tests
 1. Add a throttle option to control syncing
 1. A logo
 1. move all non-extending functions out of store.js to avoid name collision
-1. rewrite adapterFor so that it detect which adapter we should use by checking
-   a property on type(which is an object). For now we are maintaining a state
-   machine and it is possible that other functions uses that function which is
-   not in that state.
+1. make local forage a dependency
 
 # Resources:
 1. [How ember data store is initialized] (https://github.com/emberjs/data/blob/b8aff0910775f864d6f918ecda1333491a3c001f/packages/ember-data/lib/initializers/store.js)
