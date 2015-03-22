@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App;
 
-describe('Acceptance: FetchAll', function() {
+describe('Acceptance: Fetch By Id', function() {
   beforeEach(function() {
     App = startApp();
   });
@@ -27,12 +27,13 @@ describe('Acceptance: FetchAll', function() {
 
     visit('/');
     visit('/fetch-all');
+    click('li a');
 
     click('button:contains("Online")');
 
     andThen(function() {
-      expect(currentPath()).to.equal('fetch-all');
-      expect(find('#users li').length).to.be.above(0);
+      expect(currentPath()).to.equal('fetch-by-id');
+      expect(find('#name').text().length).to.be.above(0);
       done();
     });
   });

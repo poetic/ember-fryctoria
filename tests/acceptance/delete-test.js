@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App;
 
-describe('Acceptance: FetchAll', function() {
+describe('Acceptance: Delete', function() {
   beforeEach(function() {
     App = startApp();
   });
@@ -21,18 +21,24 @@ describe('Acceptance: FetchAll', function() {
   });
 
   it('works when offline', function(done) {
+    var firstUser;
+
     visit('/fetch-all');
+
+    andThen(function() {
+      firstUser = find('#users li a:first').text();
+    });
 
     click('button:contains("Offline")');
 
     visit('/');
+    visit('/delete');
+    click('button:contains("Delete")');
+    click('button:contains("Online")');
     visit('/fetch-all');
 
-    click('button:contains("Online")');
-
     andThen(function() {
-      expect(currentPath()).to.equal('fetch-all');
-      expect(find('#users li').length).to.be.above(0);
+      expect(find('#users').text()).to.not.have.string(firstUser);
       done();
     });
   });

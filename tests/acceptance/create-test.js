@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App;
 
-describe('Acceptance: FetchAll', function() {
+describe('Acceptance: Create', function() {
   beforeEach(function() {
     App = startApp();
   });
@@ -21,18 +21,23 @@ describe('Acceptance: FetchAll', function() {
   });
 
   it('works when offline', function(done) {
+    var name = 'User - ' + (Math.random() * 1000).toFixed(0);
+    var age = (Math.random() * 1000).toFixed(0);
     visit('/fetch-all');
 
     click('button:contains("Offline")');
 
     visit('/');
+    visit('/create');
+    fillIn('#name', name);
+    fillIn('#age', age);
+    click('button:contains("Create")');
+    click('button:contains("Online")');
     visit('/fetch-all');
 
-    click('button:contains("Online")');
-
     andThen(function() {
-      expect(currentPath()).to.equal('fetch-all');
-      expect(find('#users li').length).to.be.above(0);
+      expect(find('li:contains("' + name + '")').length).to.be.equal(1);
+      expect(find('li:contains("' + age + '")').length).to.be.equal(1);
       done();
     });
   });
