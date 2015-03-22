@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App;
 
-describe('Acceptance: Delete', function() {
+describe('Acceptance: Find By Id(Private)', function() {
   beforeEach(function() {
     App = startApp();
   });
@@ -21,24 +21,18 @@ describe('Acceptance: Delete', function() {
   });
 
   it('works when offline', function(done) {
-    var firstUser;
-
     visit('/fetch-all');
-
-    andThen(function() {
-      firstUser = find('#users li:first').text();
-    });
 
     click('button:contains("Offline")');
 
     visit('/');
-    visit('/delete');
-    click('button:contains("Delete")');
+    visit('/find-by-id-private');
+
     click('button:contains("Online")');
-    visit('/fetch-all');
 
     andThen(function() {
-      expect(find('#users').text()).to.not.have.string(firstUser);
+      expect(currentPath()).to.equal('find-by-id-private');
+      expect(find('#name').text().length).to.be.above(0);
       done();
     });
   });

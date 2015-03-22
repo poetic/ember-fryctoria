@@ -2,9 +2,7 @@
 <ul id='users'>
   {{#each user in model}}
   <li>
-  {{#link-to 'fetch-by-id' user.id}}
     {{user.id}}, {{user.name}}, {{user.age}}
-  {{/link-to}}
   </li>
   {{/each}}
 </ul>

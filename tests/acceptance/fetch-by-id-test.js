@@ -26,8 +26,7 @@ describe('Acceptance: Fetch By Id', function() {
     click('button:contains("Offline")');
 
     visit('/');
-    visit('/fetch-all');
-    click('li a');
+    visit('/fetch-by-id');
 
     click('button:contains("Online")');
 

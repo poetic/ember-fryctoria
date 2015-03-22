@@ -7,7 +7,8 @@ var Router = Ember.Router.extend({
 
 Router.map(function() {
   this.route('fetch-all');
-  this.route('fetch-by-id', {path: '/fetch-by-id/:id'});
+  this.route('fetch-by-id');
+  this.route('find-by-id-private');
   // This may not be supported by an adapter, implement later
   // this.route('findQuery');
   this.route('update');
