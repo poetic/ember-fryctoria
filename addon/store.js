@@ -29,7 +29,7 @@ export default DS.Store.extend({
     var _arguments     = arguments;
 
 
-    return syncToServer(store)
+    return store.get('syncer').syncUp(store)
       .then(function() {
         return _superFetchAll.call(store, type);
       })
@@ -47,7 +47,7 @@ export default DS.Store.extend({
     var _superFetchById = this.__nextSuper;
     var _arguments      = arguments;
 
-    return syncToServer(store)
+    return store.get('syncer').syncUp(store)
       .then(function() {
         return _superFetchById.apply(store, _arguments);
       })
@@ -64,12 +64,14 @@ export default DS.Store.extend({
    * Overwrite adapterFor so that we can use localAdapter when necessary
    *
    * TODO:
-   * rewrite adapterFor so that it detect which adapter we should use by checking
-   * a property on type(which is an object). For now we are maintaining a state
-   * machine and it is possible that other functions uses that function which is
-   * not in that state.
+   * Do not relay on this, instead manully fetching and extracting records from
+   * localforage!
    */
   adapterFor: function(type) {
+    // console.log(
+    //   'fryctoria.useLocalAdapter',
+    //   this.get('fryctoria.useLocalAdapter')
+    // );
     if(this.get('fryctoria.useLocalAdapter')) {
       return this.get('fryctoria.localAdapter');
     } else {
@@ -83,24 +85,15 @@ function useLocalIfOffline(error, store, _superFn, _arguments) {
     store.set('fryctoria.useLocalAdapter', true);
     return _superFn.apply(store, _arguments).then(
       function(result) {
-        store.set('fryctoria.useLocalAdapter', false);
         return result;
       },
       function(error) {
-        store.set('fryctoria.useLocalAdapter', false);
         return Promise.reject(error);
       }
     );
   } else {
     return Promise.reject(error);
   }
-}
-
-// we return the records no matter the sync succeed or fail
-function syncToServer(store) {
-  return store.syncer.runAllJobs().catch(function(error) {
-    Ember.Logger.error(error && error.stack);
-  });
 }
 
 function reloadLocalRecords(store, type, records) {
@@ -145,4 +138,3 @@ function createLocalRecord(store, type, record) {
   var modelType    = store.modelFor(type);
   localAdapter.createRecord(trashStore, modelType, record);
 }
-

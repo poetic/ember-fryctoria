@@ -51,12 +51,21 @@ export default Ember.Object.extend({
     return syncer.persistJobs(jobs);
   },
 
+  syncUp: function() {
+    return this.runAllJobs().catch(function(error) {
+      Ember.Logger.error(error && error.stack);
+    });
+  },
+
   /**
    * attampt to run all the jobs
    */
   runAllJobs: function() {
     var syncer = this;
     var jobs = this.get('jobs');
+
+    // use online adapter
+    syncer.getStore().set('fryctoria.useLocalAdapter', false);
 
     if(jobs.length === 0) {
       Ember.Logger.info('Syncing jobs are empty.');

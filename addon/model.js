@@ -14,7 +14,10 @@ export default DS.Model.extend({
     var _superSave = this.__nextSuper;
     var store      = this.get('store');
 
-    return _superSave.call(record)
+    return store.get('syncer').syncUp()
+      .then(function() {
+        return _superSave.call(record);
+      })
       .then(saveLocal)
       .catch(useLocalIfOffline);
 
@@ -42,10 +45,7 @@ export default DS.Model.extend({
 
         createJobInSyncer(store.get('syncer'), record);
 
-        return _superSave.call(record).then(function(result) {
-          store.set('fryctoria.useLocalAdapter', false);
-          return result;
-        });
+        return _superSave.call(record);
       } else {
         return Promise.reject(error);
       }
