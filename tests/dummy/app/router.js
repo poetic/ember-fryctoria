@@ -9,6 +9,7 @@ Router.map(function() {
   this.route('fetch-all');
   this.route('fetch-by-id');
   this.route('find-by-id-private');
+  this.route('reload-record');
   // This may not be supported by an adapter, implement later
   // this.route('findQuery');
   this.route('update');

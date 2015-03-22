@@ -32,7 +32,10 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
 
-1. TODO: create a branch to remove adapterFor method
+1. TODO: create a customized adapter and serializer and make sure the addon
+   still works
+1. TODO: refactor store.js, remove redundency
+1. TODO: create a branch to remove adapterFor method(maybe not a good idea)
 1. TODO: fetchById, use localSerializer
 1. TODO: remove adapterFor in store.js
 
