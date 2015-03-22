@@ -8,7 +8,7 @@ var Promise = Ember.RSVP.Promise;
 
 export default DS.Store.extend({
   fryctoria: {
-    useLocalAdapter: false,
+    isOffline:       false,
     localAdapter:    null,
     localSerializer: null,
     trashStore:      null,
@@ -110,10 +110,10 @@ export default DS.Store.extend({
    */
   adapterFor: function(type) {
     // console.log(
-    //   'fryctoria.useLocalAdapter',
-    //   this.get('fryctoria.useLocalAdapter')
+    //   'fryctoria.isOffline',
+    //   this.get('fryctoria.isOffline')
     // );
-    if(this.get('fryctoria.useLocalAdapter')) {
+    if(this.get('fryctoria.isOffline')) {
       return this.get('fryctoria.localAdapter');
     } else {
       return this._super.call(this, type);
@@ -121,7 +121,7 @@ export default DS.Store.extend({
   },
 
   serializerFor: function(type) {
-    if(this.get('fryctoria.useLocalAdapter')) {
+    if(this.get('fryctoria.isOffline')) {
       return this.get('fryctoria.localSerializer');
     } else {
       return this._super.call(this, type);
@@ -131,7 +131,7 @@ export default DS.Store.extend({
 
 function useLocalIfOffline(error, store, localFn, _arguments) {
   if(isOffline(error && error.status)) {
-    store.set('fryctoria.useLocalAdapter', true);
+    store.set('fryctoria.isOffline', true);
     return localFn.apply(store, _arguments);
   } else {
     return Promise.reject(error);

@@ -65,7 +65,7 @@ export default Ember.Object.extend({
     var jobs = this.get('jobs');
 
     // use online adapter
-    syncer.getStore().set('fryctoria.useLocalAdapter', false);
+    syncer.getStore().set('fryctoria.isOffline', false);
 
     if(jobs.length === 0) {
       Ember.Logger.info('Syncing jobs are empty.');

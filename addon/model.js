@@ -36,7 +36,7 @@ export default DS.Model.extend({
 
     function useLocalIfOffline(error) {
       if(isOffline(error && error.status)) {
-        store.set('fryctoria.useLocalAdapter', true);
+        store.set('fryctoria.isOffline', true);
         // make sure record has an id
         // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
         if(!record.get('id')) {

@@ -31,7 +31,6 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Think of a mechanisem to do syncing</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
-1. TODO: change useLocalAdapter to isOffline
 
 1. TODO: create a branch to remove adapterFor method
 1. TODO: fetchById, use localSerializer
