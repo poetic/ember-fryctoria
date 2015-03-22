@@ -1,7 +1,8 @@
-import DS        from 'ember-data';
-import LFAdapter from 'ember-localforage-adapter/adapters/localforage';
-import Ember     from 'ember';
-import isOffline from './is-offline';
+import DS           from 'ember-data';
+import LFAdapter    from 'ember-localforage-adapter/adapters/localforage';
+import LFSerializer from 'ember-localforage-adapter/serializers/localforage';
+import Ember        from 'ember';
+import isOffline    from './is-offline';
 
 var Promise = Ember.RSVP.Promise;
 
@@ -9,15 +10,18 @@ export default DS.Store.extend({
   fryctoria: {
     useLocalAdapter: false,
     localAdapter:    null,
+    localSerializer: null,
     trashStore:      null,
   },
 
   init: function() {
-    var localAdapter = LFAdapter.create({ container: this.get('container') });
-    var trashStore   = DS.Store.extend({ container: this.get('container') }).create();
+    var localAdapter    = LFAdapter.create({ container: this.get('container') });
+    var localSerializer = LFSerializer.create({ container: this.get('container') });
+    var trashStore      = DS.Store.extend({ container: this.get('container') }).create();
 
-    this.set('fryctoria.localAdapter', localAdapter);
-    this.set('fryctoria.trashStore',   trashStore);
+    this.set('fryctoria.localAdapter',    localAdapter);
+    this.set('fryctoria.localSerializer', localSerializer);
+    this.set('fryctoria.trashStore',      trashStore);
 
     this._super.apply(this, arguments);
   },
@@ -26,8 +30,6 @@ export default DS.Store.extend({
     // this._super can not be called twice, we save the REAL super here
     var store          = this;
     var _superFetchAll = this.__nextSuper;
-    var _arguments     = arguments;
-
 
     return store.get('syncer').syncUp(store)
       .then(function() {
@@ -38,25 +40,27 @@ export default DS.Store.extend({
         return records;
       })
       .catch(function(error) {
-        return useLocalIfOffline(error, store, _superFetchAll, _arguments);
+        return useLocalIfOffline(error, store, fetchAllLocal, [type]);
       });
   },
 
-  fetchById: function(type /* , id, preload */ ) {
+  // TODO: remove fetchById, use the following:
+  // find -> findById
+  // record.reload
+  fetchById: function(type, id, preload) {
     var store           = this;
     var _superFetchById = this.__nextSuper;
-    var _arguments      = arguments;
 
     return store.get('syncer').syncUp(store)
       .then(function() {
-        return _superFetchById.apply(store, _arguments);
+        return _superFetchById.apply(store, [type, id, preload]);
       })
       .then(function(record) {
         createLocalRecord(store, type, record);
         return record;
       })
       .catch(function(error) {
-        return useLocalIfOffline(error, store, _superFetchById, _arguments);
+        return useLocalIfOffline(error, store, _superFetchById, [type, id, preload]);
       });
   },
 
@@ -80,20 +84,44 @@ export default DS.Store.extend({
   }
 });
 
-function useLocalIfOffline(error, store, _superFn, _arguments) {
+function useLocalIfOffline(error, store, localFn, _arguments) {
   if(isOffline(error && error.status)) {
     store.set('fryctoria.useLocalAdapter', true);
-    return _superFn.apply(store, _arguments).then(
-      function(result) {
-        return result;
-      },
-      function(error) {
-        return Promise.reject(error);
-      }
-    );
+    return localFn.apply(store, _arguments);
   } else {
     return Promise.reject(error);
   }
+}
+
+// https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L940
+function fetchAllLocal(typeName) {
+  var store      = this;
+  var array      = store.all(typeName);
+  var type       = store.modelFor(typeName);
+  var adapter    = store.get('fryctoria.localAdapter');
+  var serializer = store.get('fryctoria.localSerializer');
+
+  array.set('isUpdating', true);
+
+  var records = adapter.findAll(store, type);
+  records = records.then(function(adapterPayload) {
+    _adapterRun(store, function() {
+     var payload = serializer.extract(store, type, adapterPayload, null, 'findAll');
+
+      Ember.assert("The response from a findAll must be an Array, not " + Ember.inspect(payload), Ember.typeOf(payload) === 'array');
+
+      store.pushMany(type, payload);
+    });
+
+    store.didUpdateAll(type);
+    return store.all(type);
+  });
+
+  return DS.PromiseArray(records);
+}
+
+function _adapterRun(store, fn) {
+  return store._backburner.run(fn);
 }
 
 function reloadLocalRecords(store, type, records) {

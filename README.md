@@ -31,9 +31,13 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Think of a mechanisem to do syncing</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
-1. TODO: use property on type to determine which adapter to use(This works!)
-1. Write tests
-1. TODO: add local-forage as a dependency
+
+1. TODO: create a branch to remove adapterFor method
+1. TODO: fetchById, use localSerializer
+1. TODO: remove adapterFor in store.js
+
+1. TODO: patch localforage to save serializer into container in a initializer
+1. TODO: add local-forage as a dependency?
 1. fork ember-localforage-adapter, remove warning
 1. Use configuration to turn on and off logging info
 1. Support different serializers
