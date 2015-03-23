@@ -17,6 +17,7 @@ export default DS.Store.extend({
   init: function() {
     var localAdapter    = LFAdapter.create({ container: this.get('container') });
     var localSerializer = LFSerializer.create({ container: this.get('container') });
+    localAdapter.set('serializer', localSerializer);
     var trashStore      = DS.Store.extend({ container: this.get('container') }).create();
 
     this.set('fryctoria.localAdapter',    localAdapter);
