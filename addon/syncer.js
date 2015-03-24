@@ -110,7 +110,8 @@ export default Ember.Object.extend({
     .catch(function(error) {
       if(isOffline(error && error.status)) {
         Ember.Logger.info('Can not connect to server, stop syncing');
-        return;
+      } else if(error === 'clear'){
+        return syncer.deleteAllJobs();
       } else {
         return RSVP.reject(error);
       }
@@ -163,6 +164,15 @@ export default Ember.Object.extend({
             localId:  recordIdBeforeCreate,
             remoteId: recordIdAfterCreate
           });
+        })
+        .catch(function(error) {
+          if(isOffline(error && error.status)) {
+            return RSVP.reject(error);
+          } else if(syncer.syncErrorHandler) {
+            return syncer.syncErrorHandler(error);
+          } else {
+            return RSVP.reject(error);
+          }
         });
     }
 
@@ -271,6 +281,7 @@ export default Ember.Object.extend({
   },
 
   deleteAllRemoteIdRecords: function() {
+    this.set('remoteIdRecords', []);
     return this.persistRemoteIdRecords([]);
   },
 
@@ -291,6 +302,11 @@ export default Ember.Object.extend({
     // TODO: use popObject which is more performant
     syncer.set('jobs', jobs);
     return syncer.persistJobs(jobs);
+  },
+
+  deleteAllJobs: function() {
+    this.set('jobs', []);
+    return this.persistJobs([]);
   },
 
   fetchJobs: function() {

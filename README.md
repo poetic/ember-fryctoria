@@ -32,6 +32,7 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
 
+1. Add a blueprint(initializer) to handle syncer error
 1. TODO: write test to make sure belongsTo and hasMany works
 1. TODO: remove deprecations
 1. TODO: create a customized adapter and serializer and make sure the addon
