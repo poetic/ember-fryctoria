@@ -199,7 +199,8 @@ export default Ember.Object.extend({
         // hasMany
         relationshipIds = relationship || [];
         hasManyRecords = relationshipIds.map(function(id) {
-          return createRecordInTrashStore(descriptor.type, id);
+          var remoteId = getRemoteId(id);
+          return createRecordInTrashStore(descriptor.type, remoteId);
         });
         record.pushObjects(hasManyRecords);
       }
