@@ -23,14 +23,17 @@ describe('Acceptance: Fetch By Id', function() {
   it('works when offline', function(done) {
     visit('/fetch-all');
 
-    click('button:contains("Offline")');
+    // NOTE: wait until the data persist into localforage
+    andLater(function() {
+      click('button:contains("Offline")');
+    });
 
     visit('/');
     visit('/fetch-by-id');
 
     click('button:contains("Online")');
 
-    andThen(function() {
+    andLater(function() {
       expect(currentPath()).to.equal('fetch-by-id');
       expect(find('#name').text().length).to.be.above(0);
       done();

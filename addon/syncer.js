@@ -15,6 +15,16 @@ var RSVP = Ember.RSVP;
  *   record:    { Object },
  *   createdAt: { Date },
  * }
+ *
+ * We save remoteIdRecords to localforage. They are used to lookup remoteIds
+ * from localIds.
+ *
+ * RecordId schema:
+ * {
+ *   typeName: { String },
+ *   localId:  { String },
+ *   remoteId: { String }
+ * }
  */
 export default Ember.Object.extend({
   init: function() {
@@ -25,10 +35,16 @@ export default Ember.Object.extend({
     // initialize jobs cache in syncer
     // jobs may be used before we fetch jobs from localforage
     syncer.set('jobs', []);
+    syncer.set('remoteIdRecords', []);
 
-    return syncer.fetchJobs().then(function(jobs) {
-      syncer.set('jobs', jobs);
-    });
+    // TODO: add a didInitialize flag?
+
+    // NOTE: get remoteIdRecords first then get jobs,
+    // since jobs depend on remoteIdRecords
+    syncer.fetchRemoteIdRecords()
+      .then(function(records)  { syncer.set('remoteIdRecords', records); })
+      .then(function()     { return syncer.fetchJobs();      })
+      .then(function(jobs) { syncer.set('jobs', jobs);       });
   },
 
   /**
@@ -83,6 +99,10 @@ export default Ember.Object.extend({
     }, RSVP.resolve())
 
     .then(function() {
+      syncer.deleteAllRemoteIdRecords();
+    })
+
+    .then(function() {
       Ember.Logger.info('Syncing succeed.');
     })
 
@@ -108,27 +128,12 @@ export default Ember.Object.extend({
     var adapter    = syncer.adapterFor(type);
 
     var recordJSON = job.record;
-    var record     = createRecordInTrashStore();
+    // TODO: use getRemoteId, since it may be update or delete
+    var record     = createRecordInTrashStore(type, recordJSON.id);
     record.setupData(recordJSON);
 
-    // load associations
-    record.eachRelationship(function(name, descriptor) {
-      var relationshipId = recordJSON[name];
-      if(!relationshipId) {
-        return;
-      }
-
-      // belongsTo
-      if(descriptor.kind === 'belongsTo') {
-        // TODO: get the real id of the relationshipId
-        // if(relationshipId.indexOf('fryctoria') === 0) {
-        //   relationshipId = syncer.getRemoteId(name, relationshipId);
-        // }
-        record.set(name, store.getById(name, relationshipId));
-      }
-
-      // TODO: hasMany
-    });
+    // load relationships
+    record.eachRelationship(addRelationship);
 
     var operation  = job.operation;
     var syncedRecord;
@@ -146,9 +151,18 @@ export default Ember.Object.extend({
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
+      var recordIdBeforeCreate = record.get('id');
       record.set('id', null);
+
       syncedRecord = adapter.createRecord(trashStore, type, record)
-        .then(updateIdInStore);
+        .then(updateIdInStore)
+        .then(function(recordIdAfterCreate) {
+          syncer.createRemoteIdRecord({
+            typeName: typeName,
+            localId:  recordIdBeforeCreate,
+            remoteId: recordIdAfterCreate
+          });
+        });
     }
 
     // delete from db after syncing success
@@ -156,21 +170,43 @@ export default Ember.Object.extend({
       syncer.deleteJobById.bind(this, job.id)
     );
 
-    function createRecordInTrashStore() {
+    function createRecordInTrashStore(type, id) {
       return type._create({
-        id:        recordJSON.id,
+        id:        id,
         store:     trashStore,
         container: syncer.get('container'),
       });
     }
 
+    function addRelationship(name, descriptor) {
+      var relationship = recordJSON[name];
+      var relationshipId, relationshipIds;
+
+      if(!relationship) { return; }
+
+      if(descriptor.kind === 'belongsTo') {
+        // belongsTo
+        relationshipId = relationship;
+        relationshipId = syncer.getRemoteId(name, relationshipId);
+        // NOTE: It is possible that the association is deleted in the store
+        // and getById is null, so we create a fake record with the right id
+        var belongsToRecord = store.getById(name, relationshipId) ||
+          createRecordInTrashStore(descriptor.type, relationshipId);
+        record.set(name, belongsToRecord);
+
+      } else if(descriptor.kind === 'hasMany') {
+        // TODO: hasMany
+        relationshipIds = relationship;
+      }
+    }
+
     function updateIdInStore(payload) {
-      // TODO this should be run in online mode
+      // NOTE: We should be in online mode now
       var recordExtracted = store.serializerFor(type).extract(
         trashStore, type, payload, record.get('id'), 'single'
       );
 
-      var recordInStore = store.getById(typeName, record.get('id'));
+      var recordInStore = store.getById(typeName, recordIdBeforeCreate);
 
       // INFO: recordInStore may be null because it may be deleted
       // INFO: This works for relationships too
@@ -178,6 +214,8 @@ export default Ember.Object.extend({
         recordInStore.set('id', null);
         store.updateId(recordInStore, recordExtracted);
       }
+
+      return recordExtracted.id;
     }
   },
 
@@ -189,9 +227,52 @@ export default Ember.Object.extend({
     return this.get('container').lookup('store:main');
   },
 
-  namespace: 'EmberFryctoriaJobs',
+  getRemoteId: function(typeName, id) {
+    if(!id) {
+      Ember.Logger.error('id can not be blank.');
+    }
+
+    if(isRemoteId(id)) {
+      // id is remote already
+      return id;
+
+    } else {
+      // try to find a remote id
+      var remoteIdRecord = this.get('remoteIdRecords').find(function(record) {
+        return record.typeName === typeName && record.localId === id;
+      });
+
+      // NOTE: it is possible we are trying to create one record
+      // and does not have a remote id.
+      return remoteIdRecord ? remoteIdRecord.remoteId : id;
+    }
+  },
 
   // database crud
+  remoteIdRecordsNamespace: 'EmberFryctoriaRemoteIdRecords',
+
+  fetchRemoteIdRecords: function() {
+    return this.get('db')
+               .getItem(this.get('remoteIdRecordsNamespace'))
+               .then(function(records) { return records || []; });
+  },
+
+  createRemoteIdRecord: function(record) {
+    var remoteIdRecords = this.get('remoteIdRecords');
+    remoteIdRecords.push(record);
+    return this.persistRemoteIdRecords(remoteIdRecords);
+  },
+
+  deleteAllRemoteIdRecords: function() {
+    return this.persistRemoteIdRecords([]);
+  },
+
+  persistRemoteIdRecords: function(records) {
+    return this.persistNamespace(this.get('remoteIdRecordsNamespace'), records);
+  },
+
+  jobsNamespace: 'EmberFryctoriaJobs',
+
   deleteJobById: function(id) {
     var syncer = this;
     var jobs = this.get('jobs');
@@ -207,11 +288,19 @@ export default Ember.Object.extend({
 
   fetchJobs: function() {
     return this.get('db')
-               .getItem(this.get('namespace'))
+               .getItem(this.get('jobsNamespace'))
                .then(function(jobs) { return jobs || []; });
   },
 
   persistJobs: function(jobs) {
-    return this.get('db').setItem(this.get('namespace'), jobs);
+    return this.persistNamespace(this.get('jobsNamespace'), jobs);
+  },
+
+  persistNamespace: function(namespace, data) {
+    return this.get('db').setItem(namespace, data);
   },
 });
+
+function isRemoteId(id) {
+  return id.indexOf('fryctoria') !== 0;
+}

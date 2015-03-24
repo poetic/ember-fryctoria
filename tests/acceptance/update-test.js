@@ -35,7 +35,7 @@ describe('Acceptance: Update', function() {
     click('button:contains("Online")');
     visit('/fetch-all');
 
-    andThen(function() {
+    andLater(function() {
       expect(find('li:contains("' + name + '")').length).to.be.equal(1);
       expect(find('li:contains("' + age + '")').length).to.be.equal(1);
       done();

@@ -37,7 +37,7 @@ describe('Acceptance: Delete', function() {
     click('button:contains("Online")');
     visit('/fetch-all');
 
-    andThen(function() {
+    andLater(function() {
       expect(find('#users').text()).to.not.have.string(firstUser);
       done();
     });

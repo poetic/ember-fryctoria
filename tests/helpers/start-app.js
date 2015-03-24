@@ -3,6 +3,18 @@ import Application from '../../app';
 import Router from '../../router';
 import config from '../../config/environment';
 
+// register helper;
+
+Ember.Test.registerAsyncHelper('andLater',
+  function(app, callback) {
+    Ember.run(function() {
+      Ember.run.later(function() {
+        callback();
+      }, 500);
+    });
+  }
+);
+
 export default function startApp(attrs) {
   var application;
 

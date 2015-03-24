@@ -39,6 +39,8 @@ export default DS.Model.extend({
         store.set('fryctoria.isOffline', true);
         // make sure record has an id
         // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
+        // NOTE: when we create a record, it does not have an id yet, we need to
+        // generate one
         if(!record.get('id')) {
           record.get('store').updateId(record, {id: generateUniqueId()});
         }

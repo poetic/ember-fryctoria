@@ -30,7 +30,7 @@ describe('Acceptance: Reload Record', function() {
 
     click('button:contains("Online")');
 
-    andThen(function() {
+    andLater(function() {
       expect(currentPath()).to.equal('reload-record');
       expect(find('#name').text().length).to.be.above(0);
       done();

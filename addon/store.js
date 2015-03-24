@@ -151,7 +151,7 @@ export default DS.Store.extend({
     }
   },
 
-  createRecord: function(type, properties) {
+  createRecord: function() {
     this.set('fryctoria.isOffline', false);
     return this._super.apply(this, arguments);
   }

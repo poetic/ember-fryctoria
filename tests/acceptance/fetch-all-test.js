@@ -30,7 +30,7 @@ describe('Acceptance: FetchAll', function() {
 
     click('button:contains("Online")');
 
-    andThen(function() {
+    andLater(function() {
       expect(currentPath()).to.equal('fetch-all');
       expect(find('#users li').length).to.be.above(0);
       done();
