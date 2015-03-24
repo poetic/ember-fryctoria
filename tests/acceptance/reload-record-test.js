@@ -23,7 +23,10 @@ describe('Acceptance: Reload Record', function() {
   it('works when offline', function(done) {
     visit('/fetch-all');
 
-    click('button:contains("Offline")');
+    // NOTE: wait until the data persist into localforage
+    andLater(function() {
+      click('button:contains("Offline")');
+    });
 
     visit('/');
     visit('/reload-record');

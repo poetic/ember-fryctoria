@@ -3,7 +3,7 @@
   {{#each user in model}}
   <li>
     {{user.id}}, {{user.name}}, {{user.age}},
-    {{link-to 'Update' 'user-update-with-id' user.id}}
+    {{link-to 'Update' 'user-update-with-id' user.id class='update'}}
   </li>
   {{/each}}
 </ul>
