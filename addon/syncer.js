@@ -181,12 +181,22 @@ export default Ember.Object.extend({
       syncer.deleteJobById.bind(this, job.id)
     );
 
+    function getOrCreateRecord(type, id) {
+      return store.getById(type.typeKey, id) ||
+             createRecordInTrashStore(type, id);
+    }
+
     function createRecordInTrashStore(type, id) {
-      return type._create({
+      // after create, the state becomes "root.empty"
+      var record = type._create({
         id:        id,
         store:     trashStore,
         container: syncer.get('container'),
       });
+
+      // after setupData, the state becomes "root.loaded.saved"
+      record.setupData({});
+      return record;
     }
 
     function addRelationship(name, descriptor) {
@@ -199,10 +209,10 @@ export default Ember.Object.extend({
         var belongsToRecord;
         // belongsTo
         relationshipId = relationship;
-        relationshipId = syncer.getRemoteId(name, relationshipId);
+        relationshipId = syncer.getRemoteId(descriptor.type.typeKey, relationshipId);
         // NOTE: It is possible that the association is deleted in the store
         // and getById is null, so we create a fake record with the right id
-        belongsToRecord = createRecordInTrashStore(descriptor.type, relationshipId);
+        belongsToRecord = getOrCreateRecord(descriptor.type, relationshipId);
         record.set(name, belongsToRecord);
 
       } else if(descriptor.kind === 'hasMany') {
@@ -211,7 +221,7 @@ export default Ember.Object.extend({
         relationshipIds = relationship || [];
         hasManyRecords = relationshipIds.map(function(id) {
           var remoteId = syncer.getRemoteId(id);
-          return createRecordInTrashStore(descriptor.type, remoteId);
+          return getOrCreateRecord(descriptor.type, remoteId);
         });
         record.pushObjects(hasManyRecords);
       }
