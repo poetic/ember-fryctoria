@@ -1,4 +1,15 @@
 <h2 id="title">Ember Fryctoria</h2>
+
+<button id="online-toggle" {{action 'toggleOnline'}}>
+  {{#if isOnline}}
+    Go Offline
+  {{else}}
+    Go Online
+  {{/if}}
+</button>
+
+<h3>User (Single CRUD)</h3>
+<p>
 {{link-to 'Index' 'index'}}
 {{link-to 'fetchAll' 'fetch-all'}}
 {{link-to 'fetchById' 'fetch-by-id'}}
@@ -7,11 +18,12 @@
 {{link-to 'update' 'update'}}
 {{link-to 'create' 'create'}}
 {{link-to 'delete' 'delete'}}
-<button id="online-toggle" {{action 'toggleOnline'}}>
-  {{#if isOnline}}
-    Go Offline
-  {{else}}
-    Go Online
-  {{/if}}
-</button>
+</p>
+
+<h3>Job (belongsTo User)</h3>
+<p>
+  {{link-to 'fetchAll Users & Jobs' 'fetch-all-jobs'}}
+  {{link-to 'create-job' 'create-job'}}
+</p>
+
 {{outlet}}

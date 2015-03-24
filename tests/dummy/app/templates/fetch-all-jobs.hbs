@@ -1,0 +1,10 @@
+<h2>fetchAll jobs</h2>
+<ul id='jobs'>
+  {{#each job in model}}
+  <li>
+    {{job.id}}, {{job.name}}, {{job.salary}}, (USER is {{job.user.name}})
+    <!-- {{link-to 'Update' 'job-update-with-id' job.id class='update'}} -->
+    <a href="" class='delete' {{action 'delete' job}}>Delete</a>
+  </li>
+  {{/each}}
+</ul>

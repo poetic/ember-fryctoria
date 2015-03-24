@@ -1,0 +1,11 @@
+<h2>job create</h2>
+{{#if model.isSaved}}
+  <div id='status'>created</div>
+{{/if}}
+{{input value=model.name   id ='name'}}
+{{input value=model.salary id ='salary'}}
+{{view "select" content=users
+  value=model.user
+  optionValuePath="content.user"
+  optionLabelPath="content.name"}}
+<button id='create' {{action 'create'}}>Create</button>

@@ -16,6 +16,10 @@ Router.map(function() {
   this.route('user-update-with-id', { path: 'user-update-with-id/:id' });
   this.route('create');
   this.route('delete');
+
+  // belongsTo relationship
+  this.route('fetch-all-jobs');
+  this.route('create-job');
 });
 
 export default Router;
