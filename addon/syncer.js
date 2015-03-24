@@ -185,18 +185,23 @@ export default Ember.Object.extend({
       if(!relationship) { return; }
 
       if(descriptor.kind === 'belongsTo') {
+        var belongsToRecord;
         // belongsTo
         relationshipId = relationship;
         relationshipId = syncer.getRemoteId(name, relationshipId);
         // NOTE: It is possible that the association is deleted in the store
         // and getById is null, so we create a fake record with the right id
-        var belongsToRecord = store.getById(name, relationshipId) ||
-          createRecordInTrashStore(descriptor.type, relationshipId);
+        belongsToRecord = createRecordInTrashStore(descriptor.type, relationshipId);
         record.set(name, belongsToRecord);
 
       } else if(descriptor.kind === 'hasMany') {
-        // TODO: hasMany
-        relationshipIds = relationship;
+        var hasManyRecords;
+        // hasMany
+        relationshipIds = relationship || [];
+        hasManyRecords = relationshipIds.map(function(id) {
+          return createRecordInTrashStore(descriptor.type, id);
+        });
+        record.pushObjects(hasManyRecords);
       }
     }
 
