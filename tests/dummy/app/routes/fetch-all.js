@@ -7,7 +7,7 @@ export default Ember.Route.extend({
 
   actions: {
     delete: function(model) {
-      model.deleteRecord();
+      model.destoryRecord();
     }
   }
 });

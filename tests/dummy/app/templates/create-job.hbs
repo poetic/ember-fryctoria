@@ -4,7 +4,8 @@
 {{/if}}
 {{input value=model.name   id ='name'}}
 {{input value=model.salary id ='salary'}}
-{{view "select" content=users
+{{view "select" id='user'
+  content=users
   value=model.user
   optionValuePath="content.user"
   optionLabelPath="content.name"}}
