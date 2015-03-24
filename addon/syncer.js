@@ -69,6 +69,7 @@ export default Ember.Object.extend({
 
   syncUp: function() {
     return this.runAllJobs().catch(function(error) {
+      Ember.Logger.warn('Syncing Error:');
       Ember.Logger.error(error && error.stack);
     });
   },
@@ -199,7 +200,7 @@ export default Ember.Object.extend({
         // hasMany
         relationshipIds = relationship || [];
         hasManyRecords = relationshipIds.map(function(id) {
-          var remoteId = getRemoteId(id);
+          var remoteId = syncer.getRemoteId(id);
           return createRecordInTrashStore(descriptor.type, remoteId);
         });
         record.pushObjects(hasManyRecords);
