@@ -2,7 +2,8 @@
 <ul id='users'>
   {{#each user in model}}
   <li>
-    {{user.id}}, {{user.name}}, {{user.age}}
+    {{user.id}}, {{user.name}}, {{user.age}},
+    {{link-to 'Update' 'user-update-with-id' user.id}}
   </li>
   {{/each}}
 </ul>

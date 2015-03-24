@@ -13,6 +13,7 @@ Router.map(function() {
   // This may not be supported by an adapter, implement later
   // this.route('findQuery');
   this.route('update');
+  this.route('user-update-with-id', { path: 'user-update-with-id/:id' });
   this.route('create');
   this.route('delete');
 });

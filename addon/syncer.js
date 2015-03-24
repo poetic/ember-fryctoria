@@ -128,8 +128,8 @@ export default Ember.Object.extend({
     var adapter    = syncer.adapterFor(type);
 
     var recordJSON = job.record;
-    // TODO: use getRemoteId, since it may be update or delete
-    var record     = createRecordInTrashStore(type, recordJSON.id);
+    var remoteId   = syncer.getRemoteId(typeName, recordJSON.id);
+    var record     = createRecordInTrashStore(type, remoteId);
     record.setupData(recordJSON);
 
     // load relationships
