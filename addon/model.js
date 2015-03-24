@@ -65,5 +65,5 @@ function createJobInSyncer(syncer, record) {
     operation = 'update';
   }
 
-  syncer.createJob(operation, typeName, record.toJSON({includeId: true}));
+  syncer.createJob(operation, typeName, record.serialize({includeId: true}));
 }

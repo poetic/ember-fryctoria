@@ -149,6 +149,11 @@ export default DS.Store.extend({
     } else {
       return this._super.call(this, type);
     }
+  },
+
+  createRecord: function(type, properties) {
+    this.set('fryctoria.isOffline', false);
+    return this._super.apply(this, arguments);
   }
 });
 
@@ -162,6 +167,7 @@ function useLocalIfOffline(error, store, localFn, _arguments) {
 }
 
 function reloadLocalRecords(store, type, records) {
+  store.set('fryctoria.isOffline', true);
   var localAdapter = store.get('fryctoria.localAdapter');
   var trashStore   = store.get('fryctoria.trashStore');
   var modelType    = store.modelFor(type);
@@ -186,7 +192,7 @@ function reloadLocalRecords(store, type, records) {
           localAdapter.createRecord(trashStore, modelType, record);
         } else {
           var recordName = record.constructor && record.constructor.typeKey;
-          var recordData = record.toJSON && record.toJSON();
+          var recordData = record.serialize && record.serialize();
           Ember.Logger.warn(
             'Record ' + recordName + ' does not have an id: ',
             recordData
@@ -198,6 +204,7 @@ function reloadLocalRecords(store, type, records) {
 }
 
 function createLocalRecord(store, type, record) {
+  store.set('fryctoria.isOffline', true);
   var localAdapter = store.get('fryctoria.localAdapter');
   var trashStore   = store.get('fryctoria.trashStore');
   var modelType    = store.modelFor(type);

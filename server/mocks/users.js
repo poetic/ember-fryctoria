@@ -1,7 +1,7 @@
 var users = [
-  { id: 1, name: 'Chun', age: 27 },
-  { id: 2, name: 'John', age: 20 },
-  { id: 3, name: 'Daniel', age: 18 }
+  { id: 1, name: 'Chun',   age: 27, isActive: true },
+  { id: 2, name: 'John',   age: 20, isActive: true },
+  { id: 3, name: 'Daniel', age: 18, isActive: false }
 ];
 
 module.exports = function(app) {

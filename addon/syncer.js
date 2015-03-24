@@ -111,6 +111,25 @@ export default Ember.Object.extend({
     var record     = createRecordInTrashStore();
     record.setupData(recordJSON);
 
+    // load associations
+    record.eachRelationship(function(name, descriptor) {
+      var relationshipId = recordJSON[name];
+      if(!relationshipId) {
+        return;
+      }
+
+      // belongsTo
+      if(descriptor.kind === 'belongsTo') {
+        // TODO: get the real id of the relationshipId
+        // if(relationshipId.indexOf('fryctoria') === 0) {
+        //   relationshipId = syncer.getRemoteId(name, relationshipId);
+        // }
+        record.set(name, store.getById(name, relationshipId));
+      }
+
+      // TODO: hasMany
+    });
+
     var operation  = job.operation;
     var syncedRecord;
 
@@ -127,6 +146,7 @@ export default Ember.Object.extend({
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
+      record.set('id', null);
       syncedRecord = adapter.createRecord(trashStore, type, record)
         .then(updateIdInStore);
     }
@@ -145,6 +165,7 @@ export default Ember.Object.extend({
     }
 
     function updateIdInStore(payload) {
+      // TODO this should be run in online mode
       var recordExtracted = store.serializerFor(type).extract(
         trashStore, type, payload, record.get('id'), 'single'
       );
