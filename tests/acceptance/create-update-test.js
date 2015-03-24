@@ -21,6 +21,8 @@ describe('Acceptance: Create and Update', function() {
   });
 
   it('works when offline', function(done) {
+    this.timeout(10000);
+
     var name = 'User - ' + (Math.random() * 1000).toFixed(0);
     var age = (Math.random() * 1000).toFixed(0);
     var newAge = (Math.random() * 1000).toFixed(0);
@@ -49,11 +51,13 @@ describe('Acceptance: Create and Update', function() {
     });
 
     click('button:contains("Online")');
+
     visit('/fetch-all');
 
     andLater(function() {
-      expect(find('li:contains("' + name + '")').length).to.be.equal(1);
-      expect(find('li:contains("' + newAge + '")').length).to.be.equal(1);
+      var userLi = find('li:contains("' + name + '")');
+      expect(userLi.length).to.be.equal(1);
+      expect(userLi.text()).to.include(newAge);
       done();
     });
   });

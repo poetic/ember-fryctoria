@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App;
 
-describe('Acceptance: Create', function() {
+describe('Acceptance: Create and Delete', function() {
   beforeEach(function() {
     App = startApp();
   });
@@ -23,24 +23,32 @@ describe('Acceptance: Create', function() {
   it('works when offline', function(done) {
     this.timeout(10000);
 
-    var name = 'User - ' + (Math.random() * 1000).toFixed(0);
-    var age = (Math.random() * 1000).toFixed(0);
+    var name   = 'User - ' + (Math.random() * 1000).toFixed(0);
+    var age    = (Math.random() * 1000).toFixed(0);
+    var newAge = (Math.random() * 1000).toFixed(0);
     visit('/fetch-all');
 
     click('button:contains("Offline")');
 
     visit('/');
+
+    // create
     visit('/create');
     fillIn('#name', name);
     fillIn('#age', age);
     click('button:contains("Create")');
+
+    // update
+    visit('/fetch-all');
+    andLater(function() {
+      find('#users li:contains("' + name + '") a.delete').click();
+    });
+
     click('button:contains("Online")');
     visit('/fetch-all');
 
     andLater(function() {
-      var userLi = find('li:contains("' + name + '")');
-      expect(userLi.length).to.be.equal(1);
-      expect(userLi.text()).to.include(age);
+      expect(find('li:contains("' + name + '")').length).to.be.equal(0);
       done();
     });
   });

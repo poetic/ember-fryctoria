@@ -4,6 +4,7 @@
   <li>
     {{user.id}}, {{user.name}}, {{user.age}},
     {{link-to 'Update' 'user-update-with-id' user.id class='update'}}
+    <a href="" class='delete' {{action 'delete' user}}>Delete</a>
   </li>
   {{/each}}
 </ul>
