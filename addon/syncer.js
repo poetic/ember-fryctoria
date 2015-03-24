@@ -223,7 +223,7 @@ export default Ember.Object.extend({
           var remoteId = syncer.getRemoteId(id);
           return getOrCreateRecord(descriptor.type, remoteId);
         });
-        record.pushObjects(hasManyRecords);
+        record.get(descriptor.key).pushObjects(hasManyRecords);
       }
     }
 
