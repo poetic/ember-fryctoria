@@ -24,11 +24,12 @@ export default DS.Model.extend({
     function saveLocal(record) {
       var localAdapter = store.get('fryctoria.localAdapter');
       var trashStore   = store.get('fryctoria.trashStore');
+      var snapshot     = record._createSnapshot();
 
       if(record.get('isDeleted')) {
-        localAdapter.deleteRecord(trashStore, record.constructor, record);
+        localAdapter.deleteRecord(trashStore, record.constructor, snapshot);
       } else {
-        localAdapter.createRecord(trashStore, record.constructor, record);
+        localAdapter.createRecord(trashStore, record.constructor, snapshot);
       }
 
       return record;

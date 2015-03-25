@@ -180,8 +180,10 @@ function reloadLocalRecords(store, type, records) {
 
   function deleteAll(previousRecords) {
     return previousRecords.map(function(rawRecord) {
-      var record = Ember.Object.create(rawRecord);
-      return localAdapter.deleteRecord(trashStore, modelType, record);
+      // NOTE: we should pass snapshot instead of rawRecord to deleteRecord,
+      // in deleteRecord, we only call snapshot.id, we can just pass the
+      // rawRecord to it.
+      return localAdapter.deleteRecord(trashStore, modelType, rawRecord);
     });
   }
 
@@ -189,7 +191,8 @@ function reloadLocalRecords(store, type, records) {
     Promise.all(previousRecords).then(function() {
       records.forEach(function(record) {
         if(record.get('id')) {
-          localAdapter.createRecord(trashStore, modelType, record);
+          var snapshot = record._createSnapshot();
+          localAdapter.createRecord(trashStore, snapshot, snapshot);
         } else {
           var recordName = record.constructor && record.constructor.typeKey;
           var recordData = record.serialize && record.serialize();
@@ -208,5 +211,6 @@ function createLocalRecord(store, type, record) {
   var localAdapter = store.get('fryctoria.localAdapter');
   var trashStore   = store.get('fryctoria.trashStore');
   var modelType    = store.modelFor(type);
-  localAdapter.createRecord(trashStore, modelType, record);
+  var snapshot     = record._createSnapshot();
+  localAdapter.createRecord(trashStore, modelType, snapshot);
 }

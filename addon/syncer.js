@@ -133,21 +133,20 @@ export default Ember.Object.extend({
     var remoteId   = syncer.getRemoteId(typeName, recordJSON.id);
     var record     = createRecordInTrashStore(type, remoteId);
     record.setupData(recordJSON);
-
-    // load relationships
-    record.eachRelationship(addRelationship);
+    record.eachRelationship(addRelationship); // load relationships
+    var snapshot   = record._createSnapshot();
 
     var operation  = job.operation;
     var syncedRecord;
 
     if(operation === 'delete') {
-      syncedRecord = adapter.deleteRecord(trashStore, type, record);
+      syncedRecord = adapter.deleteRecord(trashStore, type, snapshot);
 
     } else if(operation === 'update') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
-      syncedRecord = adapter.updateRecord(trashStore, type, record);
+      syncedRecord = adapter.updateRecord(trashStore, type, snapshot);
 
     } else if(operation === 'create') {
       // TODO: make reverse update possible
@@ -155,8 +154,9 @@ export default Ember.Object.extend({
       // will not be reflected in the store
       var recordIdBeforeCreate = record.get('id');
       record.set('id', null);
+      snapshot = record._createSnapshot();
 
-      syncedRecord = adapter.createRecord(trashStore, type, record)
+      syncedRecord = adapter.createRecord(trashStore, type, snapshot)
         .then(updateIdInStore)
         .then(function(recordIdAfterCreate) {
           syncer.createRemoteIdRecord({

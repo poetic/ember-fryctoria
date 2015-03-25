@@ -32,6 +32,10 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
 
+1. TODO: preserve the local and remote id lookup table, since it is possible
+   when we get online, the user is using findById and the id is generated.
+   Also, we should check the id in the url and change ids.
+
 1. Add a blueprint(initializer) to handle syncer error
 1. TODO: write test to make sure belongsTo and hasMany works
 1. TODO: remove deprecations
