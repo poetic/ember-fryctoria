@@ -14,6 +14,10 @@ export default DS.Store.extend({
     trashStore:      null,
   },
 
+  // fryctoriaObserver: function() {
+  //   console.log('fryctoria.isOffline:', this.get('fryctoria.isOffline'));
+  // }.observes('fryctoria.isOffline'),
+
   init: function() {
     var localAdapter    = LFAdapter.create({ container: this.get('container') });
     var localSerializer = LFSerializer.create({ container: this.get('container') });

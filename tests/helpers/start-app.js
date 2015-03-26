@@ -15,6 +15,24 @@ Ember.Test.registerAsyncHelper('andLater',
   }
 );
 
+var setOnlineStatusFn = function() {
+  var mockId;
+
+  return function(app, status) {
+    if(status) {
+      Ember.$.mockjax.clear(mockId);
+    } else {
+      mockId = Ember.$.mockjax({
+        status:       0,
+        url:          /.*/,
+        responseTime: 0,
+      });
+    }
+  };
+}();
+
+Ember.Test.registerHelper('setOnlineStatus', setOnlineStatusFn);
+
 export default function startApp(attrs) {
   var application;
 

@@ -22,7 +22,8 @@
     "andLater",
     "currentURL",
     "currentPath",
-    "currentRouteName"
+    "currentRouteName",
+    "setOnlineStatus"
   ],
   "node": false,
   "browser": false,

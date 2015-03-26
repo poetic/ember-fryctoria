@@ -202,6 +202,7 @@ export default Ember.Object.extend({
     function addRelationship(name, descriptor) {
       var relationship = recordJSON[name];
       var relationshipId, relationshipIds;
+      var relationshipTypeName = descriptor.type.typeKey;
 
       if(!relationship) { return; }
 
@@ -209,7 +210,7 @@ export default Ember.Object.extend({
         var belongsToRecord;
         // belongsTo
         relationshipId = relationship;
-        relationshipId = syncer.getRemoteId(descriptor.type.typeKey, relationshipId);
+        relationshipId = syncer.getRemoteId(relationshipTypeName, relationshipId);
         // NOTE: It is possible that the association is deleted in the store
         // and getById is null, so we create a fake record with the right id
         belongsToRecord = getOrCreateRecord(descriptor.type, relationshipId);
@@ -220,7 +221,7 @@ export default Ember.Object.extend({
         // hasMany
         relationshipIds = relationship || [];
         hasManyRecords = relationshipIds.map(function(id) {
-          var remoteId = syncer.getRemoteId(id);
+          var remoteId = syncer.getRemoteId(relationshipTypeName, id);
           return getOrCreateRecord(descriptor.type, remoteId);
         });
         record.get(descriptor.key).pushObjects(hasManyRecords);
