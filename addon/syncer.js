@@ -254,8 +254,6 @@ export default Ember.Object.extend({
     }
 
     function refershLocalRecord(recordExtracted) {
-      store.set('fryctoria.isOffline', true);
-
       // NOTE: we should pass snapshot instead of rawRecord to deleteRecord,
       // in deleteRecord, we only call snapshot.id, we can just pass the
       // rawRecord to it.
@@ -269,8 +267,6 @@ export default Ember.Object.extend({
         record.set('id', recordExtracted.id);
         return createRecordInLocalAdapter(store, type, record);
 
-      }).then(function() {
-        store.set('fryctoria.isOffline', false);
       });
     }
   },
