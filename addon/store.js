@@ -93,7 +93,17 @@ export default DS.Store.extend({
         return record;
       })
       .catch(function(error) {
-        return useLocalIfOffline(error, store, _superFindById, [typeName, id, preload]);
+        // NOTE: we need to change the state when to try to fetch a new record,
+        // since the state is now loading after a failure attempt.
+        function findByIdLocal() {
+          // NOTE: can not do getById
+          var record = store.all(typeName).findBy('id', id);
+          if(record) {
+            record.transitionTo('empty');
+          }
+          return _superFindById.apply(store, arguments);
+        }
+        return useLocalIfOffline(error, store, findByIdLocal, [typeName, id, preload]);
       });
   },
 
