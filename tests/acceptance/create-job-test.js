@@ -22,7 +22,7 @@ describe('Acceptance: Create Job', function() {
 
   it('works when offline', function(done) {
     this.timeout(10000);
-    var name, userName;
+    var name, userName, jobLi;
 
     visit('/fetch-all-jobs');
 
@@ -42,11 +42,20 @@ describe('Acceptance: Create Job', function() {
     visit('/fetch-all-jobs');
 
     andLater(function() {
-      var jobLi = find('li:contains("' + name + '")');
+      jobLi = find('li:contains("' + name + '")');
       expect(jobLi.length).to.be.equal(1);
       expect(jobLi.text()).to.include(userName);
-      done();
     });
+
+    andLater(function() {
+      Ember.run.next(function() {
+        jobLi.find('a:contains("Delete")').click();
+      });
+    });
+
+    andLater(function() {
+      done();
+    }, 1000);
   });
 });
 

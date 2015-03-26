@@ -6,11 +6,11 @@ import config from '../../config/environment';
 // register helper;
 
 Ember.Test.registerAsyncHelper('andLater',
-  function(app, callback) {
+  function(app, callback, timeout) {
     Ember.run(function() {
       Ember.run.later(function() {
         callback();
-      }, 500);
+      }, timeout || 500);
     });
   }
 );

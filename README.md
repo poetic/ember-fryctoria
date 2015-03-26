@@ -32,19 +32,17 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
 
-1. TODO: preserve the local and remote id lookup table, since it is possible
-   when we get online, the user is using findById and the id is generated.
-   Also, we should check the id in the url and change ids.
-
-1. Add a blueprint(initializer) to handle syncer error
 1. TODO: write test to make sure belongsTo and hasMany works
-1. TODO: remove deprecations
-1. TODO: create a customized adapter and serializer and make sure the addon
-   still works
-1. TODO: refactor store.js, remove redundency
-1. TODO: create a branch to remove adapterFor method(maybe not a good idea)
-1. TODO: fetchById, use localSerializer
-1. TODO: remove adapterFor in store.js
+1. TODO: think about how to deal with slow internet.
+   (Ping?, disadvantage: overhead, not a good predicator of the internet?,
+   really interaction can stil be slow.)
+1. TODO: when we are syncing, give user a way to show loading screen.
+1. TODO: let user decide what kind of error they want to define as offline
+
+1. TODO: Add a blueprint(initializer) to handle syncer error
+1. TODO: create a customized adapter and serializer and make sure the addon still works
+1. TODO: when we ARE syncing, another call to syncing should return the same
+   promise! Then user can safely sync before any request.
 
 1. TODO: patch localforage to save serializer into container in a initializer
 1. TODO: add local-forage as a dependency?
