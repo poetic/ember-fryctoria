@@ -23,16 +23,18 @@ describe('Acceptance: Create A Team(hasMany users)', function() {
   });
 
   it('works when offline', function(done) {
+    this.timeout(10000);
+
     var users, userRecords;
 
     Ember.run(function() {
       users = [
-        store.createRecord('user', { name: 'team-create-user-1' }).save(),
-        store.createRecord('user', { name: 'team-create-user-2' }).save()
+        store.createRecord('user', { name: 'create-team-user-1' }).save(),
+        store.createRecord('user', { name: 'create-team-user-2' }).save()
       ];
     });
 
-    var teamName = 'team-create-1';
+    var teamName = 'create-team-team-1';
 
     // #online
     RSVP.all(users).then(function(users) {
@@ -64,7 +66,11 @@ describe('Acceptance: Create A Team(hasMany users)', function() {
         return team.destroyRecord();
       });
     }).then(function() {
-      done();
+      // NOTE: wait until reloadLocalRecords is finished,
+      // otherwise we would get strange error when destroying the app.
+      andLater(function() {
+        done();
+      }, 1000);
     });
   });
 });

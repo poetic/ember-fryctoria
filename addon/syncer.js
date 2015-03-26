@@ -1,6 +1,7 @@
-import Ember from 'ember';
-import isOffline from './is-offline';
-import generateUniqueId from './generate-unique-id';
+import Ember             from 'ember';
+import isOffline         from './is-offline';
+import generateUniqueId  from './generate-unique-id';
+import createRecordInLocalAdapter from './create-record-in-local-adapter';
 
 var RSVP = Ember.RSVP;
 
@@ -158,13 +159,8 @@ export default Ember.Object.extend({
 
       syncedRecord = adapter.createRecord(trashStore, type, snapshot)
         .then(updateIdInStore)
-        .then(function(recordIdAfterCreate) {
-          syncer.createRemoteIdRecord({
-            typeName: typeName,
-            localId:  recordIdBeforeCreate,
-            remoteId: recordIdAfterCreate
-          });
-        })
+        .then(createRemoteIdRecord)
+        .then(refershLocalRecord)
         .catch(function(error) {
           if(isOffline(error && error.status)) {
             return RSVP.reject(error);
@@ -240,10 +236,42 @@ export default Ember.Object.extend({
       // INFO: This works for relationships too
       if(recordInStore) {
         recordInStore.set('id', null);
+        console.log('recordExtracted', recordExtracted);
         store.updateId(recordInStore, recordExtracted);
       }
 
-      return recordExtracted.id;
+      return recordExtracted;
+    }
+
+    function createRemoteIdRecord(recordExtracted) {
+      return syncer.createRemoteIdRecord({
+        typeName: typeName,
+        localId:  recordIdBeforeCreate,
+        remoteId: recordExtracted.id
+      }).then(function() {
+        return recordExtracted;
+      });
+    }
+
+    function refershLocalRecord(recordExtracted) {
+      store.set('fryctoria.isOffline', true);
+
+      // NOTE: we should pass snapshot instead of rawRecord to deleteRecord,
+      // in deleteRecord, we only call snapshot.id, we can just pass the
+      // rawRecord to it.
+
+      // delete existing record with localId
+      return store.get('fryctoria.localAdapter').deleteRecord(
+        trashStore, type, {id: recordIdBeforeCreate}
+
+      ).then(function() {
+        // create new record with remoteId
+        record.set('id', recordExtracted.id);
+        return createRecordInLocalAdapter(store, type, record);
+
+      }).then(function() {
+        store.set('fryctoria.isOffline', false);
+      });
     }
   },
 

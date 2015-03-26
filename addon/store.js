@@ -3,6 +3,7 @@ import LFAdapter    from 'ember-localforage-adapter/adapters/localforage';
 import LFSerializer from 'ember-localforage-adapter/serializers/localforage';
 import Ember        from 'ember';
 import isOffline    from './is-offline';
+import createRecordInLocalAdapter from './create-record-in-local-adapter';
 
 var Promise = Ember.RSVP.Promise;
 
@@ -31,6 +32,13 @@ export default DS.Store.extend({
     this._super.apply(this, arguments);
   },
 
+  /**
+    This method returns a fresh collection from the server, regardless of if there is already records
+    in the store or not.
+    @method fetchAll
+    @param {String or subclass of DS.Model} type
+    @return {Promise} promise
+  */
   fetchAll: function(type) {
     // this._super can not be called twice, we save the REAL super here
     var store          = this;
@@ -61,7 +69,7 @@ export default DS.Store.extend({
         return _superFetchById.apply(store, [type, id, preload]);
       })
       .then(function(record) {
-        createLocalRecord(store, type, record);
+        createRecordInLocalAdapter(store, type, record);
         return record;
       })
       .catch(function(error) {
@@ -93,7 +101,7 @@ export default DS.Store.extend({
         return _superFindById.apply(store, [typeName, id, preload]);
       })
       .then(function(record) {
-        createLocalRecord(store, typeName, record);
+        createRecordInLocalAdapter(store, typeName, record);
         return record;
       })
       .catch(function(error) {
@@ -137,7 +145,7 @@ export default DS.Store.extend({
         return _superReloadRecord.apply(store, [record]);
       })
       .then(function(record) {
-        createLocalRecord(store, typeName, record);
+        createRecordInLocalAdapter(store, typeName, record);
         return record;
       })
       .catch(function(error) {
@@ -180,17 +188,21 @@ function useLocalIfOffline(error, store, localFn, _arguments) {
   }
 }
 
+/**
+ * @param {boolean} sync used to determin wether we wait unitll the records are
+ * reloaded locally.
+ */
 function reloadLocalRecords(store, type, records) {
   store.set('fryctoria.isOffline', true);
   var localAdapter = store.get('fryctoria.localAdapter');
   var trashStore   = store.get('fryctoria.trashStore');
   var modelType    = store.modelFor(type);
 
-  localAdapter.findAll(trashStore, modelType)
+  var localRecords = localAdapter.findAll(trashStore, modelType)
     .then(deleteAll)
     .then(createAll);
 
-  return records;
+  return localRecords;
 
   function deleteAll(previousRecords) {
     return previousRecords.map(function(rawRecord) {
@@ -202,29 +214,23 @@ function reloadLocalRecords(store, type, records) {
   }
 
   function createAll(previousRecords) {
-    Promise.all(previousRecords).then(function() {
-      records.forEach(function(record) {
+    return Promise.all(previousRecords).then(function() {
+      var createdRecords = records.map(function(record) {
         if(record.get('id')) {
           var snapshot = record._createSnapshot();
-          localAdapter.createRecord(trashStore, snapshot, snapshot);
+          return localAdapter.createRecord(trashStore, snapshot, snapshot);
         } else {
           var recordName = record.constructor && record.constructor.typeKey;
           var recordData = record.serialize && record.serialize();
           Ember.Logger.warn(
-            'Record ' + recordName + ' does not have an id: ',
+            'Record ' + recordName + ' does not have an id, therefor we can not create it in locally: ',
             recordData
           );
+          return Promise.resolve();
         }
       });
+
+      return Promise.all(createdRecords);
     });
   }
-}
-
-function createLocalRecord(store, type, record) {
-  store.set('fryctoria.isOffline', true);
-  var localAdapter = store.get('fryctoria.localAdapter');
-  var trashStore   = store.get('fryctoria.trashStore');
-  var modelType    = store.modelFor(type);
-  var snapshot     = record._createSnapshot();
-  localAdapter.createRecord(trashStore, modelType, snapshot);
 }

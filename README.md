@@ -32,9 +32,6 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
 
-var store = Dummy.__container__.lookup('store:main');
-
-1. TODO: write test to make sure belongsTo and hasMany works
 1. TODO: think about how to deal with slow internet.
    (Ping?, disadvantage: overhead, not a good predicator of the internet?,
    really interaction can stil be slow.)
@@ -56,16 +53,10 @@ var store = Dummy.__container__.lookup('store:main');
 1. A logo
 1. move all non-extending functions out of store.js to avoid name collision
 1. make local forage a dependency
+1. Sideload (manul save to local)
+1. Do syncing periodically or check if online
+1. Refresh local data after create or update
 
 # Resources:
 1. [How ember data store is initialized] (https://github.com/emberjs/data/blob/b8aff0910775f864d6f918ecda1333491a3c001f/packages/ember-data/lib/initializers/store.js)
 2. [Ember Data Store] (https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L107)
-
-# Temp:
-1. refactor model and store, prepare to integrate syncer
-1. add syncer to model
-
-# TODO:
-1. Sideload (manul save to local)
-1. Do syncing periodically or check if online
-1. Refresh local data after create or update
