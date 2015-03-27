@@ -6,28 +6,64 @@ import createRecordInLocalAdapter from './create-record-in-local-adapter';
 var RSVP = Ember.RSVP;
 
 /**
- * We save offline jobs to localforage and run them one at a time
- *
- * Job schema:
- * {
- *   id:        { String },
- *   operation: { 'create'|'update'|'delete' },
- *   typeName:  { String },
- *   record:    { Object },
- *   createdAt: { Date },
- * }
- *
- * We save remoteIdRecords to localforage. They are used to lookup remoteIds
- * from localIds.
- *
- * RecordId schema:
- * {
- *   typeName: { String },
- *   localId:  { String },
- *   remoteId: { String }
- * }
+  We save offline jobs to localforage and run them one at a time when online
+
+  Job schema:
+  ```
+  {
+    id:        { String },
+    operation: { 'create'|'update'|'delete' },
+    typeName:  { String },
+    record:    { Object },
+    createdAt: { Date },
+  }
+  ```
+
+  We save remoteIdRecords to localforage. They are used to lookup remoteIds
+  from localIds.
+
+  RecordId schema:
+  ```
+  {
+    typeName: { String },
+    localId:  { String },
+    remoteId: { String }
+  }
+ ```
+
+ @class Syncer
+ @extends Ember.Object
  */
 export default Ember.Object.extend({
+  /**
+   * @property db
+   * @type Localforage
+   * @private
+   */
+  db: null,
+
+  /**
+   * @property jobs
+   * @type Array
+   * @private
+   */
+  jobs: null,
+
+  /**
+   * @property remoteIdRecords
+   * @type Array
+   * @private
+   */
+  remoteIdRecords: null,
+
+  /**
+   * Initialize db.
+   *
+   * Initialize jobs, remoteIdRecords. Either from localforage or emmpty array.
+   *
+   * @method init
+   * @private
+   */
   init: function() {
     var syncer = this;
 
@@ -49,9 +85,14 @@ export default Ember.Object.extend({
   },
 
   /**
-   * save an offline job locally, this is used in ember data models
-   * @param {String} operation
-   * @param {Object} record
+   * Save an offline job to localforage, this is used in DS.Model.save
+   *
+   * @method createJob
+   * @public
+   * @param {String} operation 'create'|'update'|'delete'
+   * @param {String} typeName
+   * @param {DS.Model} record
+   * @return {Promise} jobs
    */
   createJob: function(operation, typeName, record) {
     var syncer = this;
@@ -68,6 +109,15 @@ export default Ember.Object.extend({
     return syncer.persistJobs(jobs);
   },
 
+  /**
+   * Run all the jobs to sync up. If there is an error while syncing, it will
+   * only log the error instead of return a rejected promise. This is called in
+   * all the methods in DS.Store and DS.Model that talk to the server.
+   *
+   * @method syncUp
+   * @public
+   * @return {Promise} this promise will always resolve.
+   */
   syncUp: function() {
     return this.runAllJobs().catch(function(error) {
       Ember.Logger.warn('Syncing Error:');
@@ -76,7 +126,15 @@ export default Ember.Object.extend({
   },
 
   /**
-   * attampt to run all the jobs
+   * Attampt to run all the jobs one by one. It will stop when all jobs are
+   * processed or one of the three errors:
+   * 1. offline: resolve
+   * 2. 'clear': clear all the jobs and resolve
+   * 3. other error: reject
+   *
+   * @method runAllJobs
+   * @private
+   * @return {Promise}
    */
   runAllJobs: function() {
     var syncer = this;

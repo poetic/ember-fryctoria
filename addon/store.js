@@ -7,6 +7,10 @@ import createRecordInLocalAdapter from './create-record-in-local-adapter';
 
 var Promise = Ember.RSVP.Promise;
 
+/**
+ * @class FryctoriaStore
+ * @extends DS.Store
+ */
 export default DS.Store.extend({
   fryctoria: {
     isOffline:       false,
