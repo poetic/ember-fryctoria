@@ -3,7 +3,8 @@ module.exports = function(app) {
   var jobsRouter = express.Router();
   var jobs = [
     {id: 1, name: 'Mechanical Engineer', salary: 100},
-    {id: 2, name: 'Web Developer', salary: 100}
+    {id: 2, name: 'Teacher', salary: 100},
+    {id: 3, name: 'Web Developer', salary: 100}
   ];
 
   jobsRouter.get('/', function(req, res) {

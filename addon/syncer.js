@@ -74,8 +74,6 @@ export default Ember.Object.extend({
     syncer.set('jobs', []);
     syncer.set('remoteIdRecords', []);
 
-    // TODO: add a didInitialize flag?
-
     // NOTE: get remoteIdRecords first then get jobs,
     // since jobs depend on remoteIdRecords
     syncer.fetchRemoteIdRecords()
@@ -141,7 +139,7 @@ export default Ember.Object.extend({
     var jobs = this.get('jobs');
 
     // use online adapter
-    syncer.getStore().set('fryctoria.isOffline', false);
+    syncer.lookupStore('main').set('fryctoria.isOffline', false);
 
     if(jobs.length === 0) {
       Ember.Logger.info('Syncing jobs are empty.');
@@ -180,32 +178,28 @@ export default Ember.Object.extend({
   runJob: function(job) {
     var syncer     = this;
 
-    var store      = syncer.getStore();
-    var trashStore = store.get('fryctoria.trashStore');
+    var store      = syncer.lookupStore('main');
 
     var typeName   = job.typeName;
     var type       = store.modelFor(typeName);
 
-    var adapter    = syncer.adapterFor(type);
+    var adapter    = store.adapterFor(typeName);
 
-    var recordJSON = job.record;
-    var remoteId   = syncer.getRemoteId(typeName, recordJSON.id);
-    var record     = createRecordInTrashStore(type, remoteId);
-    record.setupData(recordJSON);
-    record.eachRelationship(addRelationship); // load relationships
+    var record     = createRecordFromJob(syncer, job, type);
     var snapshot   = record._createSnapshot();
 
     var operation  = job.operation;
+
     var syncedRecord;
 
     if(operation === 'delete') {
-      syncedRecord = adapter.deleteRecord(trashStore, type, snapshot);
+      syncedRecord = adapter.deleteRecord(store, type, snapshot);
 
     } else if(operation === 'update') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
-      syncedRecord = adapter.updateRecord(trashStore, type, snapshot);
+      syncedRecord = adapter.updateRecord(store, type, snapshot);
 
     } else if(operation === 'create') {
       // TODO: make reverse update possible
@@ -215,10 +209,10 @@ export default Ember.Object.extend({
       record.set('id', null);
       snapshot = record._createSnapshot();
 
-      syncedRecord = adapter.createRecord(trashStore, type, snapshot)
+      syncedRecord = adapter.createRecord(store, type, snapshot)
         .then(updateIdInStore)
         .then(createRemoteIdRecord)
-        .then(refershLocalRecord)
+        .then(refreshLocalRecord)
         .catch(function(error) {
           if(isOffline(error && error.status)) {
             return RSVP.reject(error);
@@ -235,66 +229,17 @@ export default Ember.Object.extend({
       syncer.deleteJobById.bind(this, job.id)
     );
 
-    function getOrCreateRecord(type, id) {
-      return store.getById(type.typeKey, id) ||
-             createRecordInTrashStore(type, id);
-    }
-
-    function createRecordInTrashStore(type, id) {
-      // after create, the state becomes "root.empty"
-      var record = type._create({
-        id:        id,
-        store:     trashStore,
-        container: syncer.get('container'),
-      });
-
-      // after setupData, the state becomes "root.loaded.saved"
-      record.setupData({});
-      return record;
-    }
-
-    function addRelationship(name, descriptor) {
-      var relationship = recordJSON[name];
-      var relationshipId, relationshipIds;
-      var relationshipTypeName = descriptor.type.typeKey;
-
-      if(!relationship) { return; }
-
-      if(descriptor.kind === 'belongsTo') {
-        var belongsToRecord;
-        // belongsTo
-        relationshipId = relationship;
-        relationshipId = syncer.getRemoteId(relationshipTypeName, relationshipId);
-        // NOTE: It is possible that the association is deleted in the store
-        // and getById is null, so we create a fake record with the right id
-        belongsToRecord = getOrCreateRecord(descriptor.type, relationshipId);
-        record.set(name, belongsToRecord);
-
-      } else if(descriptor.kind === 'hasMany') {
-        var hasManyRecords;
-        // hasMany
-        relationshipIds = relationship || [];
-        hasManyRecords = relationshipIds.map(function(id) {
-          var remoteId = syncer.getRemoteId(relationshipTypeName, id);
-          return getOrCreateRecord(descriptor.type, remoteId);
-        });
-        record.get(descriptor.key).pushObjects(hasManyRecords);
-      }
-    }
-
     function updateIdInStore(payload) {
       // NOTE: We should be in online mode now
       var recordExtracted = store.serializerFor(type).extract(
-        trashStore, type, payload, record.get('id'), 'single'
+        store, type, payload, record.get('id'), 'single'
       );
 
       var recordInStore = store.getById(typeName, recordIdBeforeCreate);
 
       // INFO: recordInStore may be null because it may be deleted
-      // INFO: This works for relationships too
       if(recordInStore) {
         recordInStore.set('id', null);
-        console.log('recordExtracted', recordExtracted);
         store.updateId(recordInStore, recordExtracted);
       }
 
@@ -311,14 +256,16 @@ export default Ember.Object.extend({
       });
     }
 
-    function refershLocalRecord(recordExtracted) {
+    function refreshLocalRecord(recordExtracted) {
       // NOTE: we should pass snapshot instead of rawRecord to deleteRecord,
       // in deleteRecord, we only call snapshot.id, we can just pass the
       // rawRecord to it.
 
       // delete existing record with localId
-      return store.get('fryctoria.localAdapter').deleteRecord(
-        trashStore, type, {id: recordIdBeforeCreate}
+      var localStore   = syncer.lookupStore('local');
+      var localAdapter = localStore.get('adapter');
+      return localAdapter.deleteRecord(
+        localStore, type, {id: recordIdBeforeCreate}
 
       ).then(function() {
         // create new record with remoteId
@@ -329,12 +276,8 @@ export default Ember.Object.extend({
     }
   },
 
-  adapterFor: function(typeName) {
-    return this.getStore().adapterFor(typeName);
-  },
-
-  getStore: function() {
-    return this.get('container').lookup('store:main');
+  lookupStore: function(storeName) {
+    return this.get('container').lookup('store:' + storeName);
   },
 
   getRemoteId: function(typeName, id) {
@@ -419,4 +362,66 @@ export default Ember.Object.extend({
 
 function isRemoteId(id) {
   return id.indexOf('fryctoria') !== 0;
+}
+
+function createRecordFromJob(syncer, job, type) {
+  var remoteId = syncer.getRemoteId(job.typeName, job.record.id);
+  var record   = createRecordInLocalStore(syncer, type, remoteId);
+
+  record.setupData(job.record);
+  record.eachRelationship(function(name, descriptor) {
+    addRelationshipToRecord(name, descriptor, job.record, record, syncer);
+  }); // load relationships
+
+  return record;
+}
+
+function addRelationshipToRecord(name, descriptor, jobRecord, record, syncer) {
+  var relationship = jobRecord[name];
+  var relationshipId, relationshipIds;
+  var relationshipTypeName = descriptor.type.typeKey;
+
+  if(!relationship) { return; }
+
+  if(descriptor.kind === 'belongsTo') {
+    var belongsToRecord;
+    // belongsTo
+    relationshipId = relationship;
+    relationshipId = syncer.getRemoteId(relationshipTypeName, relationshipId);
+    // NOTE: It is possible that the association is deleted in the store
+    // and getById is null, so we create a fake record with the right id
+    belongsToRecord = getOrCreateRecord(syncer, descriptor.type, relationshipId);
+    record.set(name, belongsToRecord);
+
+  } else if(descriptor.kind === 'hasMany') {
+    var hasManyRecords;
+    // hasMany
+    relationshipIds = relationship || [];
+    hasManyRecords = relationshipIds.map(function(id) {
+      var remoteId = syncer.getRemoteId(relationshipTypeName, id);
+      return getOrCreateRecord(syncer, descriptor.type, remoteId);
+    });
+    record.get(descriptor.key).pushObjects(hasManyRecords);
+  }
+}
+
+function getOrCreateRecord(syncer, type, id) {
+  var store = syncer.lookupStore('main');
+
+  return store.getById(type.typeKey, id) ||
+         createRecordInLocalStore(syncer, type, id);
+}
+
+
+function createRecordInLocalStore(syncer, type, id) {
+  // after create, the state becomes "root.empty"
+  var record = type._create({
+    id:        id,
+    store:     syncer.lookupStore('local'),
+    container: syncer.get('container'),
+  });
+
+  // after setupData, the state becomes "root.loaded.saved"
+  record.setupData({});
+  return record;
 }

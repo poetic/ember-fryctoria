@@ -2,13 +2,15 @@ import DS           from 'ember-data';
 import LFAdapter    from 'ember-localforage-adapter/adapters/localforage';
 import LFSerializer from 'ember-localforage-adapter/serializers/localforage';
 import Ember        from 'ember';
-import isOffline    from './is-offline';
-import createRecordInLocalAdapter from './create-record-in-local-adapter';
+import isOffline    from '../is-offline';
+import createRecordInLocalAdapter from '../create-record-in-local-adapter';
 
 var Promise = Ember.RSVP.Promise;
 
 /**
- * @class FryctoriaStore
+ * This will be used as store:main
+ *
+ * @class FryctoriaRemoteStore
  * @extends DS.Store
  */
 export default DS.Store.extend({
@@ -64,20 +66,20 @@ export default DS.Store.extend({
   // fetchById use the following methods:
   // find -> findById
   // model#reload -> store#reloadRecord
-  fetchById: function(type, id, preload) {
+  fetchById: function(typeName, id, preload) {
     var store           = this;
     var _superFetchById = this.__nextSuper;
 
     return store.get('syncer').syncUp(store)
       .then(function() {
-        return _superFetchById.apply(store, [type, id, preload]);
+        return _superFetchById.apply(store, [typeName, id, preload]);
       })
       .then(function(record) {
-        createRecordInLocalAdapter(store, type, record);
+        createRecordInLocalAdapter(store, typeName, record);
         return record;
       })
       .catch(function(error) {
-        return useLocalIfOffline(error, store, _superFetchById, [type, id, preload]);
+        return useLocalIfOffline(error, store, _superFetchById, [typeName, id, preload]);
       });
   },
 
