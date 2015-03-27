@@ -34,6 +34,8 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 
 1. !!! TODO ? give trashStore localForage Serializer? overwrite this.serializerFor
    in trashStore.
+1. Change all tests to the same format
+
 1. TODO: think about how to deal with slow internet.
    (Ping?, disadvantage: overhead, not a good predicator of the internet?,
    really interaction can stil be slow.)

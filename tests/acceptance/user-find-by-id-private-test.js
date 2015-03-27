@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App, store;
 
-describe('Acceptance: User Fetch By Id', function() {
+describe('Acceptance: User Find By Id(Private)', function() {
   beforeEach(function() {
     App = startApp();
     store = App.__container__.lookup('store:main');
@@ -23,17 +23,18 @@ describe('Acceptance: User Fetch By Id', function() {
   });
 
   it('works when offline', function(done) {
-    var name = 'user-fetch-by-id-1';
+    var name = 'user-find-by-id-1';
     var userPromise;
 
     Ember.run(function() {
-      userPromise = store.createRecord('user', {name: name});
+      userPromise = store.createRecord('user', {name: name}).save();
     });
 
-    userPromise.save().then(function(userCreated) {
+    userPromise.then(function(userCreated) {
       // #offline
       setOnlineStatus(false);
-      return store.fetchById('user', userCreated.get('id'));
+      userCreated.unloadRecord();
+      return store.findById('user', userCreated.get('id'));
 
     }).then(function(userFetched) {
       expect(userFetched.get('name')).to.equal(name);

@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App, store;
 
-describe('Acceptance: User Fetch By Id', function() {
+describe('Acceptance: User Reload Record', function() {
   beforeEach(function() {
     App = startApp();
     store = App.__container__.lookup('store:main');
@@ -23,22 +23,22 @@ describe('Acceptance: User Fetch By Id', function() {
   });
 
   it('works when offline', function(done) {
-    var name = 'user-fetch-by-id-1';
+    var name = 'user-reload-id-1';
     var userPromise;
 
     Ember.run(function() {
       userPromise = store.createRecord('user', {name: name});
     });
 
-    userPromise.save().then(function(userCreated) {
+    userPromise.save().then(function(user) {
       // #offline
       setOnlineStatus(false);
-      return store.fetchById('user', userCreated.get('id'));
+      return user.reload();
 
-    }).then(function(userFetched) {
-      expect(userFetched.get('name')).to.equal(name);
+    }).then(function(user) {
+      expect(user.get('name')).to.equal(name);
       setOnlineStatus(true);
-      return userFetched.destroyRecord();
+      return user.destroyRecord();
 
     }).then(function() {
       // NOTE: wait until saveLocal is finished,
