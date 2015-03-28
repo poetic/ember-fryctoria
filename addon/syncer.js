@@ -2,6 +2,7 @@ import Ember             from 'ember';
 import isOffline         from './is-offline';
 import generateUniqueId  from './generate-unique-id';
 import createRecordInLocalAdapter from './create-record-in-local-adapter';
+import reloadLocalRecords from './reload-local-records';
 
 var RSVP = Ember.RSVP;
 
@@ -121,6 +122,26 @@ export default Ember.Object.extend({
       Ember.Logger.warn('Syncing Error:');
       Ember.Logger.error(error && error.stack);
     });
+  },
+
+  /**
+   * TODO: test this.
+   * Save all records in the store into localforage.
+   *
+   * @method syncDown
+   * @public
+   * @param {String} typeName
+   * @return {Promie}
+   */
+  syncDown: function(typeName) {
+    var syncer = this;
+
+    if(typeName) {
+      return reloadLocalRecords(syncer.get('container'), typeName);
+    } else {
+      // TODO: get all types and loop through them.
+      return RSVP.resolve();
+    }
   },
 
   /**

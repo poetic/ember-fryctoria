@@ -4,6 +4,7 @@ import LFSerializer from 'ember-localforage-adapter/serializers/localforage';
 import Ember        from 'ember';
 import isOffline    from '../is-offline';
 import createRecordInLocalAdapter from '../create-record-in-local-adapter';
+import reloadLocalRecords         from '../reload-local-records';
 
 var Promise = Ember.RSVP.Promise;
 
@@ -55,7 +56,7 @@ export default DS.Store.extend({
         return _superFetchAll.call(store, type);
       })
       .then(function(records) {
-        reloadLocalRecords(store, type, records);
+        reloadLocalRecords(store.get('container'), type);
         return records;
       })
       .catch(function(error) {
@@ -191,52 +192,5 @@ function useLocalIfOffline(error, store, localFn, _arguments) {
     return localFn.apply(store, _arguments);
   } else {
     return Promise.reject(error);
-  }
-}
-
-/**
- * @param {boolean} sync used to determin wether we wait unitll the records are
- * reloaded locally.
- */
-function reloadLocalRecords(store, type, records) {
-  store.set('fryctoria.isOffline', true);
-  var localAdapter = store.get('fryctoria.localAdapter');
-  var trashStore   = store.get('fryctoria.trashStore');
-  var modelType    = store.modelFor(type);
-
-  var localRecords = localAdapter.findAll(trashStore, modelType)
-    .then(deleteAll)
-    .then(createAll);
-
-  return localRecords;
-
-  function deleteAll(previousRecords) {
-    return previousRecords.map(function(rawRecord) {
-      // NOTE: we should pass snapshot instead of rawRecord to deleteRecord,
-      // in deleteRecord, we only call snapshot.id, we can just pass the
-      // rawRecord to it.
-      return localAdapter.deleteRecord(trashStore, modelType, rawRecord);
-    });
-  }
-
-  function createAll(previousRecords) {
-    return Promise.all(previousRecords).then(function() {
-      var createdRecords = records.map(function(record) {
-        if(record.get('id')) {
-          var snapshot = record._createSnapshot();
-          return localAdapter.createRecord(trashStore, snapshot, snapshot);
-        } else {
-          var recordName = record.constructor && record.constructor.typeKey;
-          var recordData = record.serialize && record.serialize();
-          Ember.Logger.warn(
-            'Record ' + recordName + ' does not have an id, therefor we can not create it in locally: ',
-            recordData
-          );
-          return Promise.resolve();
-        }
-      });
-
-      return Promise.all(createdRecords);
-    });
   }
 }
