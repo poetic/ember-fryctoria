@@ -18,43 +18,47 @@ export default DS.Model.extend({
       .then(function() {
         return _superSave.call(record);
       })
-      .then(saveLocal)
-      .catch(useLocalIfOffline);
-
-    function saveLocal(record) {
-      var localAdapter = store.get('container').lookup('store:local').get('adapter');
-      var snapshot     = record._createSnapshot();
-
-      if(record.get('isDeleted')) {
-        localAdapter.deleteRecord(null, record.constructor, snapshot);
-      } else {
-        localAdapter.createRecord(null, record.constructor, snapshot);
-      }
-
-      return record;
-    }
-
-    function useLocalIfOffline(error) {
-      if(isOffline(error && error.status)) {
-        store.set('fryctoria.isOffline', true);
-        // make sure record has an id
-        // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
-        // NOTE: when we create a record, it does not have an id yet, we need to
-        // generate one
-        if(!record.get('id')) {
-          record.get('store').updateId(record, {id: generateUniqueId()});
-        }
-
-        createJobInSyncer(store.get('syncer'), record);
-
-        // TODO: use local store to create a record and push it to main store
-        return _superSave.call(record);
-      } else {
-        return Promise.reject(error);
-      }
-    }
+      .then(syncDown)
+      .catch(function(error) {
+        return useLocalIfOffline(error, record, _superSave);
+      });
   }
 });
+
+function syncDown(record) {
+  var localAdapter = record.get('container').lookup('store:local').get('adapter');
+  var snapshot     = record._createSnapshot();
+
+  if(record.get('isDeleted')) {
+    localAdapter.deleteRecord(null, record.constructor, snapshot);
+  } else {
+    localAdapter.createRecord(null, record.constructor, snapshot);
+  }
+
+  return record;
+}
+
+function useLocalIfOffline(error, record, _superSave) {
+  var isOnline = !isOffline(error && error.status);
+  if(isOnline) {
+    return Promise.reject(error);
+  }
+
+  var store = record.get('store');
+  store.set('fryctoria.isOffline', true);
+
+  // Make sure record has an id
+  // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
+  // NOTE: when we create a record, it does not have an id yet, we need to
+  // generate one
+  if(!record.get('id')) {
+    store.updateId(record, {id: generateUniqueId()});
+  }
+
+  createJobInSyncer(store.get('syncer'), record);
+
+  return _superSave.call(record);
+}
 
 function createJobInSyncer(syncer, record) {
   var typeName = record.constructor.typeKey;
