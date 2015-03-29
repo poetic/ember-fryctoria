@@ -1,6 +1,6 @@
 import DS               from 'ember-data';
-import isOffline        from './is-offline';
-import generateUniqueId from './generate-unique-id';
+import isOffline        from './utils/is-offline';
+import generateUniqueId from './utils/generate-unique-id';
 import Ember            from 'ember';
 
 var Promise = Ember.RSVP.Promise;

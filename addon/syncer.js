@@ -1,8 +1,8 @@
 import Ember             from 'ember';
-import isOffline         from './is-offline';
-import generateUniqueId  from './generate-unique-id';
-import createRecordInLocalAdapter from './create-record-in-local-adapter';
-import reloadLocalRecords from './reload-local-records';
+import isOffline         from './utils/is-offline';
+import generateUniqueId  from './utils/generate-unique-id';
+import createRecordInLocalAdapter from './utils/create-record-in-local-adapter';
+import reloadLocalRecords from './utils/reload-local-records';
 
 var RSVP = Ember.RSVP;
 

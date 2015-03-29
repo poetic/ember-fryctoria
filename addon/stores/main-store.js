@@ -1,8 +1,8 @@
 import DS           from 'ember-data';
 import Ember        from 'ember';
-import isOffline    from '../is-offline';
-import createRecordInLocalAdapter from '../create-record-in-local-adapter';
-import reloadLocalRecords         from '../reload-local-records';
+import isOffline    from '../utils/is-offline';
+import createRecordInLocalAdapter from '../utils/create-record-in-local-adapter';
+import reloadLocalRecords         from '../utils/reload-local-records';
 
 var Promise = Ember.RSVP.Promise;
 
