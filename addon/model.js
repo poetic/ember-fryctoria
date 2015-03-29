@@ -48,6 +48,7 @@ export default DS.Model.extend({
 
         createJobInSyncer(store.get('syncer'), record);
 
+        // TODO: use local store to create a record and push it to remote store
         return _superSave.call(record);
       } else {
         return Promise.reject(error);

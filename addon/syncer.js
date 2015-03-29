@@ -36,26 +36,10 @@ var RSVP = Ember.RSVP;
  @extends Ember.Object
  */
 export default Ember.Object.extend({
-  /**
-   * @property db
-   * @type Localforage
-   * @private
-   */
   db: null,
-
-  /**
-   * @property jobs
-   * @type Array
-   * @private
-   */
-  jobs: null,
-
-  /**
-   * @property remoteIdRecords
-   * @type Array
-   * @private
-   */
-  remoteIdRecords: null,
+  // initialize jobs since jobs may be used before we fetch from localforage
+  jobs: [],
+  remoteIdRecords: [],
 
   /**
    * Initialize db.
@@ -70,17 +54,11 @@ export default Ember.Object.extend({
 
     syncer.set('db', window.localforage);
 
-    // initialize jobs cache in syncer
-    // jobs may be used before we fetch jobs from localforage
-    syncer.set('jobs', []);
-    syncer.set('remoteIdRecords', []);
-
     // NOTE: get remoteIdRecords first then get jobs,
     // since jobs depend on remoteIdRecords
-    syncer.fetchRemoteIdRecords()
-      .then(function(records)  { syncer.set('remoteIdRecords', records); })
-      .then(function()     { return syncer.fetchJobs();      })
-      .then(function(jobs) { syncer.set('jobs', jobs);       });
+    syncer.getAll('remoteIdRecord').then(function() {
+      syncer.getAll('job');
+    });
   },
 
   /**
@@ -94,18 +72,15 @@ export default Ember.Object.extend({
    * @return {Promise} jobs
    */
   createJob: function(operation, typeName, record) {
-    var syncer = this;
-    var jobs = this.get('jobs');
-
-    jobs.pushObject({
+    var job = {
       id:        generateUniqueId(),
       operation: operation,
       typeName:  typeName,
       record:    record,
       createdAt: (new Date()).getTime(),
-    });
+    };
 
-    return syncer.persistJobs(jobs);
+    return this.create('job', job);
   },
 
   /**
@@ -130,7 +105,7 @@ export default Ember.Object.extend({
    *
    * @method syncDown
    * @public
-   * @param {String} typeName
+   * @param {String} typeName DS.Model typeName
    * @return {Promie}
    */
   syncDown: function(typeName) {
@@ -178,7 +153,7 @@ export default Ember.Object.extend({
     }, RSVP.resolve())
 
     .then(function() {
-      syncer.deleteAllRemoteIdRecords();
+      syncer.deleteAll('remoteIdRecord');
     })
 
     .then(function() {
@@ -189,7 +164,7 @@ export default Ember.Object.extend({
       if(isOffline(error && error.status)) {
         Ember.Logger.info('Can not connect to server, stop syncing');
       } else if(error === 'clear'){
-        return syncer.deleteAllJobs();
+        return syncer.deleteAll('job');
       } else {
         return RSVP.reject(error);
       }
@@ -235,9 +210,7 @@ export default Ember.Object.extend({
         .then(createRemoteIdRecord)
         .then(refreshLocalRecord)
         .catch(function(error) {
-          if(isOffline(error && error.status)) {
-            return RSVP.reject(error);
-          } else if(syncer.syncErrorHandler) {
+          if(syncer.syncErrorHandler) {
             return syncer.syncErrorHandler(error);
           } else {
             return RSVP.reject(error);
@@ -246,9 +219,9 @@ export default Ember.Object.extend({
     }
 
     // delete from db after syncing success
-    return syncedRecord.then(
-      syncer.deleteJobById.bind(this, job.id)
-    );
+    return syncedRecord.then(function() {
+      return syncer.deleteById('job', job.id);
+    });
 
     function updateIdInStore(payload) {
       // NOTE: We should be in online mode now
@@ -268,7 +241,7 @@ export default Ember.Object.extend({
     }
 
     function createRemoteIdRecord(recordExtracted) {
-      return syncer.createRemoteIdRecord({
+      return syncer.create('remoteIdRecord', {
         typeName: typeName,
         localId:  recordIdBeforeCreate,
         remoteId: recordExtracted.id
@@ -302,84 +275,72 @@ export default Ember.Object.extend({
   },
 
   getRemoteId: function(typeName, id) {
-    if(!id) {
-      Ember.Logger.error('id can not be blank.');
-    }
+    Ember.assert('Id can not be blank.', !Ember.isNone(id));
 
     if(isRemoteId(id)) {
-      // id is remote already
       return id;
-
-    } else {
-      // try to find a remote id
-      var remoteIdRecord = this.get('remoteIdRecords').find(function(record) {
-        return record.typeName === typeName && record.localId === id;
-      });
-
-      // NOTE: it is possible we are trying to create one record
-      // and does not have a remote id.
-      return remoteIdRecord ? remoteIdRecord.remoteId : id;
     }
-  },
 
-  // database crud
-  remoteIdRecordsNamespace: 'EmberFryctoriaRemoteIdRecords',
-
-  fetchRemoteIdRecords: function() {
-    return this.get('db')
-               .getItem(this.get('remoteIdRecordsNamespace'))
-               .then(function(records) { return records || []; });
-  },
-
-  createRemoteIdRecord: function(record) {
-    var remoteIdRecords = this.get('remoteIdRecords');
-    remoteIdRecords.push(record);
-    return this.persistRemoteIdRecords(remoteIdRecords);
-  },
-
-  deleteAllRemoteIdRecords: function() {
-    this.set('remoteIdRecords', []);
-    return this.persistRemoteIdRecords([]);
-  },
-
-  persistRemoteIdRecords: function(records) {
-    return this.persistNamespace(this.get('remoteIdRecordsNamespace'), records);
-  },
-
-  jobsNamespace: 'EmberFryctoriaJobs',
-
-  deleteJobById: function(id) {
-    var syncer = this;
-    var jobs = this.get('jobs');
-
-    jobs = jobs.filter(function(job) {
-      return id !== job.id;
+    // Try to find a remote id from local id
+    // NOTE: it is possible we are trying to create one record in local
+    // and does not have a remote id yet.
+    var remoteIdRecord = this.get('remoteIdRecords').find(function(record) {
+      return record.typeName === typeName && record.localId === id;
     });
 
-    // TODO: use popObject which is more performant
-    syncer.set('jobs', jobs);
-    return syncer.persistJobs(jobs);
+    return remoteIdRecord ? remoteIdRecord.remoteId : id;
   },
 
-  deleteAllJobs: function() {
-    this.set('jobs', []);
-    return this.persistJobs([]);
+  // CRUD for jobs and remoteIdRecords
+  getAll: function(typeName) {
+    var syncer = this;
+    var namespace = getNamespace(typeName);
+
+    return syncer.get('db').getItem(namespace).then(function(records) {
+      records = records || [];
+      syncer.set(pluralize(typeName), records);
+      return records;
+    });
   },
 
-  fetchJobs: function() {
-    return this.get('db')
-               .getItem(this.get('jobsNamespace'))
-               .then(function(jobs) { return jobs || []; });
+  deleteAll: function(typeName) {
+    return this.saveAll(typeName, []);
   },
 
-  persistJobs: function(jobs) {
-    return this.persistNamespace(this.get('jobsNamespace'), jobs);
+  deleteById: function(typeName, id) {
+    var records = this.get(pluralize(typeName)).filter(function(record) {
+      return id !== record.id;
+    });
+
+    return this.saveAll(typeName, records);
   },
 
-  persistNamespace: function(namespace, data) {
-    return this.get('db').setItem(namespace, data);
+  create: function(typeName, record) {
+    var records = this.get(pluralize(typeName));
+    records.push(record);
+
+    return this.saveAll(typeName, records);
+  },
+
+  saveAll: function(typeName, records) {
+    this.set(pluralize(typeName), records);
+
+    var namespace = getNamespace(typeName);
+    return this.get('db').setItem(namespace, records);
   },
 });
+
+function pluralize(typeName) {
+  return typeName + 's';
+}
+
+function getNamespace(typeName) {
+  if(typeName === 'job') {
+    return 'EmberFryctoriaJobs';
+  } else if(typeName === 'remoteIdRecord') {
+    return 'EmberFryctoriaRemoteIdRecords';
+  }
+}
 
 function isRemoteId(id) {
   return id.indexOf('fryctoria') !== 0;
