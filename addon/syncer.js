@@ -66,21 +66,28 @@ export default Ember.Object.extend({
    *
    * @method createJob
    * @public
-   * @param {String} operation 'create'|'update'|'delete'
-   * @param {String} typeName
    * @param {DS.Model} record
    * @return {Promise} jobs
    */
-  createJob: function(operation, typeName, record) {
-    var job = {
+  createJob: function(record) {
+    var typeName = record.constructor.typeKey;
+    var operation;
+
+    if(record.get('isNew')) {
+      operation = 'create';
+    } else if(record.get('isDeleted')) {
+      operation = 'delete';
+    } else {
+      operation = 'update';
+    }
+
+    return this.create('job', {
       id:        generateUniqueId(),
       operation: operation,
       typeName:  typeName,
-      record:    record,
+      record:    record.serialize({includeId: true}),
       createdAt: (new Date()).getTime(),
-    };
-
-    return this.create('job', job);
+    });
   },
 
   /**

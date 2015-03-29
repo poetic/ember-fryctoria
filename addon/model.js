@@ -45,6 +45,7 @@ function useLocalIfOffline(error, record, _superSave) {
   }
 
   var store = record.get('store');
+
   store.set('fryctoria.isOffline', true);
 
   // Make sure record has an id
@@ -55,22 +56,7 @@ function useLocalIfOffline(error, record, _superSave) {
     store.updateId(record, {id: generateUniqueId()});
   }
 
-  createJobInSyncer(store.get('syncer'), record);
+  store.get('syncer').createJob(record);
 
   return _superSave.call(record);
-}
-
-function createJobInSyncer(syncer, record) {
-  var typeName = record.constructor.typeKey;
-  var operation;
-
-  if(record.get('isNew')) {
-    operation = 'create';
-  } else if(record.get('isDeleted')) {
-    operation = 'delete';
-  } else {
-    operation = 'update';
-  }
-
-  syncer.createJob(operation, typeName, record.serialize({includeId: true}));
 }
