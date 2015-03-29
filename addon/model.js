@@ -22,14 +22,13 @@ export default DS.Model.extend({
       .catch(useLocalIfOffline);
 
     function saveLocal(record) {
-      var localAdapter = store.get('fryctoria.localAdapter');
-      var trashStore   = store.get('fryctoria.trashStore');
+      var localAdapter = store.get('container').lookup('store:local').get('adapter');
       var snapshot     = record._createSnapshot();
 
       if(record.get('isDeleted')) {
-        localAdapter.deleteRecord(trashStore, record.constructor, snapshot);
+        localAdapter.deleteRecord(null, record.constructor, snapshot);
       } else {
-        localAdapter.createRecord(trashStore, record.constructor, snapshot);
+        localAdapter.createRecord(null, record.constructor, snapshot);
       }
 
       return record;
@@ -48,7 +47,7 @@ export default DS.Model.extend({
 
         createJobInSyncer(store.get('syncer'), record);
 
-        // TODO: use local store to create a record and push it to remote store
+        // TODO: use local store to create a record and push it to main store
         return _superSave.call(record);
       } else {
         return Promise.reject(error);

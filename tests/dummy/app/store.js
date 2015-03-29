@@ -1,4 +1,4 @@
-import FryctoriaRemoteStore from 'ember-fryctoria/stores/remote-store';
+import FryctoriaMainStore from 'ember-fryctoria/stores/main-store';
 
-export default FryctoriaRemoteStore.extend({
+export default FryctoriaMainStore.extend({
 });

@@ -32,9 +32,6 @@ Note: only handle error, since success is handled by didSaveRecord.</del>
 1. <del>Perf, cached jobs in syncer</del>
 1. <del>Namespace all custome stuff or put them into functions</del>
 
-1. !!! TODO ? give trashStore localForage Serializer? overwrite this.serializerFor
-   in trashStore.
-
 1. TODO: think about how to deal with slow internet.
    (Ping?, disadvantage: overhead, not a good predicator of the internet?,
    real interaction can stil be slow, we actually make the request slower, what

@@ -205,6 +205,7 @@ export default Ember.Object.extend({
       record.set('id', null);
       snapshot = record._createSnapshot();
 
+      // adapter -> store -> syncer(remoteId) -> localforage
       syncedRecord = adapter.createRecord(store, type, snapshot)
         .then(updateIdInStore)
         .then(createRemoteIdRecord)
@@ -224,7 +225,6 @@ export default Ember.Object.extend({
     });
 
     function updateIdInStore(payload) {
-      // NOTE: We should be in online mode now
       var recordExtracted = store.serializerFor(type).extract(
         store, type, payload, record.get('id'), 'single'
       );

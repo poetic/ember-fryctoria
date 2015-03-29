@@ -45,7 +45,7 @@ function createLocalRecord(localAdapter, modelType, record) {
 
   } else {
     var recordName = record.constructor && record.constructor.typeKey;
-    var warnMessage = 'Record ' + recordName + ' does not have an id, therefor we can not create it in locally: ';
+    var warnMessage = 'Record ' + recordName + ' does not have an id, therefor we can not create it locally: ';
 
     var recordData = record.toJSON      && record.toJSON();
 

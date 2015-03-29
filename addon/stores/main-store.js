@@ -1,6 +1,4 @@
 import DS           from 'ember-data';
-import LFAdapter    from 'ember-localforage-adapter/adapters/localforage';
-import LFSerializer from 'ember-localforage-adapter/serializers/localforage';
 import Ember        from 'ember';
 import isOffline    from '../is-offline';
 import createRecordInLocalAdapter from '../create-record-in-local-adapter';
@@ -11,7 +9,7 @@ var Promise = Ember.RSVP.Promise;
 /**
  * This will be used as store:main
  *
- * @class FryctoriaRemoteStore
+ * @class FryctoriaMainStore
  * @extends DS.Store
  */
 export default DS.Store.extend({
@@ -19,7 +17,6 @@ export default DS.Store.extend({
     isOffline:       false,
     localAdapter:    null,
     localSerializer: null,
-    trashStore:      null,
   },
 
   // fryctoriaObserver: function() {
@@ -27,14 +24,12 @@ export default DS.Store.extend({
   // }.observes('fryctoria.isOffline'),
 
   init: function() {
-    var localAdapter    = LFAdapter.create({ container: this.get('container') });
-    var localSerializer = LFSerializer.create({ container: this.get('container') });
-    localAdapter.set('serializer', localSerializer);
-    var trashStore      = DS.Store.extend({ container: this.get('container') }).create();
+    var localStore      = this.container.lookup('store:local');
+    var localAdapter    = localStore.get('adapter');
+    var localSerializer = localAdapter.get('serializer');
 
     this.set('fryctoria.localAdapter',    localAdapter);
     this.set('fryctoria.localSerializer', localSerializer);
-    this.set('fryctoria.trashStore',      trashStore);
 
     this._super.apply(this, arguments);
   },
@@ -161,10 +156,6 @@ export default DS.Store.extend({
   },
 
   adapterFor: function(type) {
-    // console.log(
-    //   'fryctoria.isOffline',
-    //   this.get('fryctoria.isOffline')
-    // );
     if(this.get('fryctoria.isOffline')) {
       return this.get('fryctoria.localAdapter');
     } else {
