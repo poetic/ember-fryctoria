@@ -1,6 +1,8 @@
-import DS           from 'ember-data';
-import Ember        from 'ember';
-import isOffline    from '../utils/is-offline';
+import DS    from 'ember-data';
+import Ember from 'ember';
+import decorateAdapter    from './decorate-adapter';
+import decorateSerializer from './decorate-serializer';
+import isOffline                  from '../utils/is-offline';
 import createRecordInLocalAdapter from '../utils/create-record-in-local-adapter';
 import reloadLocalRecords         from '../utils/reload-local-records';
 
@@ -159,7 +161,8 @@ export default DS.Store.extend({
     if(this.get('fryctoria.isOffline')) {
       return this.get('fryctoria.localAdapter');
     } else {
-      return this._super.call(this, type);
+      var adapter = this._super(type);
+      return decorateAdapter(adapter);
     }
   },
 
@@ -167,7 +170,8 @@ export default DS.Store.extend({
     if(this.get('fryctoria.isOffline')) {
       return this.get('fryctoria.localSerializer');
     } else {
-      return this._super.call(this, type);
+      var serializer = this._super(type);
+      return decorateSerializer(serializer);
     }
   },
 
