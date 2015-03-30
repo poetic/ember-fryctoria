@@ -35,30 +35,37 @@ export default function decorateAdapter(adapter, container) {
 
 function decorateAdapterMethod(adapter, localAdapter, methodName) {
   var originMethod = adapter[methodName];
-  var backupMethod = function() {
+  var backupMethod = createBackupMethod(localAdapter, methodName);
 
+  adapter[methodName] = function() {
+    return originMethod.apply(adapter, arguments).catch(backup(backupMethod, arguments));
+  };
+
+  adapter.fryctoria[methodName] = originMethod;
+}
+
+function createBackupMethod(localAdapter, methodName) {
+  var container   = localAdapter.container;
+  var crudMethods = ['createRecord', 'updateRecord', 'deleteRecord'];
+  var isCRUD      = crudMethods.indexOf(methodName) !== -1;
+  var isCreate    = methodName === 'createRecord';
+
+  return function backupMethod() {
     var args = Array.prototype.slice.call(arguments);
 
-    var crudMethods = ['createRecord', 'updateRecord', 'deleteRecord'];
-    var isCRUD = crudMethods.indexOf(methodName) !== -1;
-    // ---------- CRUD
     if(isCRUD) {
       var snapshot = args[2];
-      var syncer = adapter.container.lookup('syncer:main');
 
-      // Add an id to record before create in local
-      if(methodName === 'createRecord') {
-        var record = snapshot.record;
-        record.get('store').updateId(record, {id: generateUniqueId()});
-        snapshot = record._createSnapshot();
+      if(isCreate) {
+        snapshot = addIdToSnapshot(snapshot);
       }
 
-      syncer.createJob(methodName, snapshot);
+      createJobInSyncer(container, methodName, snapshot);
 
-      // decorate snapshot for serializer#serialize
+      // decorate snapshot for serializer#serialize, this should be after
+      // createJob in syncer
       snapshot.fryctoria = true;
     }
-    // ---------- CRUD END
 
     return localAdapter[methodName].apply(localAdapter, args)
       .then(function(payload) {
@@ -69,10 +76,16 @@ function decorateAdapterMethod(adapter, localAdapter, methodName) {
         return payload;
       });
   };
+}
 
-  adapter[methodName] = function() {
-    return originMethod.apply(adapter, arguments).catch(backup(backupMethod, arguments));
-  };
+// Add an id to record before create in local
+function addIdToSnapshot(snapshot) {
+  var record = snapshot.record;
+  record.get('store').updateId(record, {id: generateUniqueId()});
+  return record._createSnapshot();
+}
 
-  adapter.fryctoria[methodName] = originMethod;
+function createJobInSyncer(container, methodName, snapshot) {
+  var syncer = container.lookup('syncer:main');
+  syncer.createJob(methodName, snapshot);
 }
