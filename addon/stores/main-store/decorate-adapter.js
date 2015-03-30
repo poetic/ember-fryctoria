@@ -1,6 +1,6 @@
-import backup           from '../utils/backup';
-import isObject         from '../utils/is-object';
-import generateUniqueId from '../utils/generate-unique-id';
+import backup           from '../../utils/backup';
+import isObject         from '../../utils/is-object';
+import generateUniqueId from '../../utils/generate-unique-id';
 
 /*
  * Extend adapter so that we can use local adapter when offline
@@ -45,17 +45,18 @@ function decorateAdapterMethod(adapter, localAdapter, methodName) {
     if(isCRUD) {
       var snapshot = args[2];
       var syncer = adapter.container.lookup('syncer:main');
-      var record = snapshot.record;
 
       // Add an id to record before create in local
       if(methodName === 'createRecord') {
+        var record = snapshot.record;
         record.get('store').updateId(record, {id: generateUniqueId()});
         snapshot = record._createSnapshot();
       }
 
+      syncer.createJob(methodName, snapshot);
+
       // decorate snapshot for serializer#serialize
       snapshot.fryctoria = true;
-      syncer.createJob(record);
     }
     // ---------- CRUD END
 

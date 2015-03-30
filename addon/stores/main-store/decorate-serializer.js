@@ -1,4 +1,4 @@
-import isObject from '../utils/is-object';
+import isObject from '../../utils/is-object';
 
 /*
  * Extend serializer so that we can use local serializer when local adater is

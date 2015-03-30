@@ -23,9 +23,9 @@ function syncDown(record) {
   var snapshot     = record._createSnapshot();
 
   if(record.get('isDeleted')) {
-    localAdapter.deleteRecord(null, record.constructor, snapshot);
+    localAdapter.deleteRecord(null, snapshot.type, snapshot);
   } else {
-    localAdapter.createRecord(null, record.constructor, snapshot);
+    localAdapter.createRecord(null, snapshot.type, snapshot);
   }
 
   return record;

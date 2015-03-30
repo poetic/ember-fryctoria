@@ -13,7 +13,7 @@ var RSVP = Ember.RSVP;
   ```
   {
     id:        { String },
-    operation: { 'create'|'update'|'delete' },
+    operation: { 'createRecord'|'updateRecord'|'deleteRecord' },
     typeName:  { String },
     record:    { Object },
     createdAt: { Date },
@@ -67,26 +67,19 @@ export default Ember.Object.extend({
    *
    * @method createJob
    * @public
-   * @param {DS.Model} record
+   * @param {String} operation
+   * @param {DS.Snapshot} snapshot
    * @return {Promise} jobs
    */
-  createJob: function(record) {
-    var typeName = record.constructor.typeKey;
-    var operation;
-
-    if(record.get('isNew')) {
-      operation = 'create';
-    } else if(record.get('isDeleted')) {
-      operation = 'delete';
-    } else {
-      operation = 'update';
-    }
+  createJob: function(operation, snapshot) {
+    var typeName = snapshot.typeKey;
+    var serializer = this.lookupStore('main').serializerFor(typeName);
 
     return this.create('job', {
       id:        generateUniqueId('job'),
       operation: operation,
       typeName:  typeName,
-      record:    record.serialize({includeId: true}),
+      record:    serializer.serialize(snapshot, {includeId: true}),
       createdAt: (new Date()).getTime(),
     });
   },
@@ -194,16 +187,16 @@ export default Ember.Object.extend({
 
     var syncedRecord;
 
-    if(operation === 'delete') {
+    if(operation === 'deleteRecord') {
       syncedRecord = remoteCRUD.deleteRecord.call(adapter, store, type, snapshot);
 
-    } else if(operation === 'update') {
+    } else if(operation === 'updateRecord') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
       syncedRecord = remoteCRUD.updateRecord.call(adapter, store, type, snapshot);
 
-    } else if(operation === 'create') {
+    } else if(operation === 'createRecord') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store

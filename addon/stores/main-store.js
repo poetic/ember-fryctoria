@@ -1,6 +1,6 @@
 import DS    from 'ember-data';
-import decorateAdapter    from './decorate-adapter';
-import decorateSerializer from './decorate-serializer';
+import decorateAdapter    from './main-store/decorate-adapter';
+import decorateSerializer from './main-store/decorate-serializer';
 import createRecordInLocalAdapter from '../utils/create-record-in-local-adapter';
 import reloadLocalRecords         from '../utils/reload-local-records';
 
