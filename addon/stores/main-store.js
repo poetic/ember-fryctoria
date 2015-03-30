@@ -1,8 +1,7 @@
 import DS    from 'ember-data';
 import decorateAdapter    from './main-store/decorate-adapter';
 import decorateSerializer from './main-store/decorate-serializer';
-import createRecordInLocalAdapter from '../utils/create-record-in-local-adapter';
-import reloadLocalRecords         from '../utils/reload-local-records';
+import decorateAPICall    from './main-store/decorate-api-call';
 
 /**
  * This will be used as store:main
@@ -18,20 +17,7 @@ export default DS.Store.extend({
     @param {String or subclass of DS.Model} type
     @return {Promise} promise
   */
-  fetchAll: function(type) {
-    // this._super can not be called twice, we save the REAL super here
-    var store          = this;
-    var _superFetchAll = this.__nextSuper;
-
-    return store.get('syncer').syncUp()
-      .then(function() {
-        return _superFetchAll.call(store, type);
-      })
-      .then(function(records) {
-        reloadLocalRecords(store.container, type);
-        return records;
-      });
-  },
+  fetchAll: decorateAPICall('all'),
 
   /*
    * fetchById use the following methods:
@@ -40,19 +26,7 @@ export default DS.Store.extend({
    * NOTE: this will trigger syncUp twice, this is OK. And since this is
    *  a public method, we probably want to preserve this.
    */
-  fetchById: function(typeName, id, preload) {
-    var store           = this;
-    var _superFetchById = this.__nextSuper;
-
-    return store.get('syncer').syncUp()
-      .then(function() {
-        return _superFetchById.apply(store, [typeName, id, preload]);
-      })
-      .then(function(record) {
-        createRecordInLocalAdapter(store, typeName, record);
-        return record;
-      });
-  },
+  fetchById: decorateAPICall('single'),
 
   /**
     This method returns a record for a given type and id combination.
@@ -66,19 +40,7 @@ export default DS.Store.extend({
     @param {Object} preload - optional set of attributes and relationships passed in either as IDs or as actual models
     @return {Promise} promise
   */
-  findById: function(typeName, id, preload) {
-    var store           = this;
-    var _superFindById = this.__nextSuper;
-
-    return store.get('syncer').syncUp()
-      .then(function() {
-        return _superFindById.apply(store, [typeName, id, preload]);
-      })
-      .then(function(record) {
-        createRecordInLocalAdapter(store, typeName, record);
-        return record;
-      });
-  },
+  findById: decorateAPICall('single'),
 
   /**
    * Used by:
@@ -96,20 +58,7 @@ export default DS.Store.extend({
     @param {DS.Model} record
     @return {Promise} promise
   */
-  reloadRecord: function(record) {
-    var store              = this;
-    var _superReloadRecord = this.__nextSuper;
-    var typeName           = record.constructor.typeKey;
-
-    return store.get('syncer').syncUp()
-      .then(function() {
-        return _superReloadRecord.apply(store, [record]);
-      })
-      .then(function(record) {
-        createRecordInLocalAdapter(store, typeName, record);
-        return record;
-      });
-  },
+  reloadRecord: decorateAPICall('single'),
 
   adapterFor: function(type) {
     var adapter = this._super(type);

@@ -1,8 +1,9 @@
-import Ember             from 'ember';
-import isOffline         from './utils/is-offline';
-import generateUniqueId  from './utils/generate-unique-id';
+import Ember from 'ember';
+import isOffline                  from './utils/is-offline';
+import generateUniqueId           from './utils/generate-unique-id';
 import createRecordInLocalAdapter from './utils/create-record-in-local-adapter';
-import reloadLocalRecords from './utils/reload-local-records';
+import reloadLocalRecords         from './utils/reload-local-records';
+import isModelInstance            from './utils/is-model-instance';
 
 var RSVP = Ember.RSVP;
 
@@ -62,7 +63,6 @@ export default Ember.Object.extend({
   },
 
   /**
-   * TODO: use snapshot instead of record?
    * Save an offline job to localforage, this is used in DS.Model.save
    *
    * @method createJob
@@ -94,29 +94,50 @@ export default Ember.Object.extend({
    * @return {Promise} this promise will always resolve.
    */
   syncUp: function() {
-    return this.runAllJobs().catch(function(error) {
-      Ember.Logger.warn('Syncing Error:');
-      Ember.Logger.error(error && error.stack);
-    });
+    return this.runAllJobs();
   },
 
   /**
-   * TODO: test this.
+   * TODO:
    * Save all records in the store into localforage.
    *
    * @method syncDown
    * @public
-   * @param {String} typeName DS.Model typeName
+   * @param {String|DS.Model|Array} typeName, record, records
    * @return {Promie}
    */
-  syncDown: function(typeName) {
+  syncDown: function(descriptor) {
     var syncer = this;
 
-    if(typeName) {
-      return reloadLocalRecords(syncer.get('container'), typeName);
+    if(typeof descriptor === 'string') {
+      return reloadLocalRecords(syncer.get('container'), descriptor);
+
+    } else if(isModelInstance(descriptor)) {
+      return syncer.syncDownRecord(descriptor);
+
+    } else if(Ember.isArray(descriptor)) {
+      var updatedRecords = descriptor.map(function(record) {
+        return syncer.syncDownRecord(record);
+      });
+      return RSVP.all(updatedRecords);
+
     } else {
-      // TODO: get all types and loop through them.
-      return RSVP.resolve();
+      throw new Error('Input can only be a string, a DS.Model or an array of DS.Model, but is ' + descriptor);
+    }
+  },
+
+  /**
+   * @method
+   * @private
+   */
+  syncDownRecord: function(record) {
+    var localAdapter = this.lookupStore('local').get('adapter');
+    var snapshot     = record._createSnapshot();
+
+    if(record.get('isDeleted')) {
+      return localAdapter.deleteRecord(null, snapshot.type, snapshot);
+    } else {
+      return localAdapter.createRecord(null, snapshot.type, snapshot);
     }
   },
 
