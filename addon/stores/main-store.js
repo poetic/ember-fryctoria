@@ -17,10 +17,6 @@ export default DS.Store.extend({
     localSerializer: null,
   },
 
-  // fryctoriaObserver: function() {
-  //   console.log('fryctoria.isOffline:', this.get('fryctoria.isOffline'));
-  // }.observes('fryctoria.isOffline'),
-
   init: function() {
     var localStore      = this.container.lookup('store:local');
     var localAdapter    = localStore.get('adapter');
@@ -44,7 +40,7 @@ export default DS.Store.extend({
     var store          = this;
     var _superFetchAll = this.__nextSuper;
 
-    return store.get('syncer').syncUp(store)
+    return store.get('syncer').syncUp()
       .then(function() {
         return _superFetchAll.call(store, type);
       })
@@ -61,7 +57,7 @@ export default DS.Store.extend({
     var store           = this;
     var _superFetchById = this.__nextSuper;
 
-    return store.get('syncer').syncUp(store)
+    return store.get('syncer').syncUp()
       .then(function() {
         return _superFetchById.apply(store, [typeName, id, preload]);
       })
@@ -90,7 +86,7 @@ export default DS.Store.extend({
     var store           = this;
     var _superFindById = this.__nextSuper;
 
-    return store.get('syncer').syncUp(store)
+    return store.get('syncer').syncUp()
       .then(function() {
         return _superFindById.apply(store, [typeName, id, preload]);
       })
@@ -121,7 +117,7 @@ export default DS.Store.extend({
     var _superReloadRecord = this.__nextSuper;
     var typeName           = record.constructor.typeKey;
 
-    return store.get('syncer').syncUp(store)
+    return store.get('syncer').syncUp()
       .then(function() {
         return _superReloadRecord.apply(store, [record]);
       })
