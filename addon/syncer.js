@@ -56,12 +56,13 @@ export default Ember.Object.extend({
 
     // NOTE: get remoteIdRecords first then get jobs,
     // since jobs depend on remoteIdRecords
-    syncer.getAll('remoteIdRecord').then(function() {
-      syncer.getAll('job');
-    });
+    syncer.getAll('remoteIdRecord').then(
+      syncer.getAll.bind(syncer, 'job')
+    );
   },
 
   /**
+   * TODO: use snapshot instead of record?
    * Save an offline job to localforage, this is used in DS.Model.save
    *
    * @method createJob
@@ -82,7 +83,7 @@ export default Ember.Object.extend({
     }
 
     return this.create('job', {
-      id:        generateUniqueId(),
+      id:        generateUniqueId('job'),
       operation: operation,
       typeName:  typeName,
       record:    record.serialize({includeId: true}),
@@ -141,9 +142,6 @@ export default Ember.Object.extend({
     var syncer = this;
     var jobs = this.get('jobs');
 
-    // use online adapter
-    syncer.lookupStore('main').set('fryctoria.isOffline', false);
-
     if(jobs.length === 0) {
       Ember.Logger.info('Syncing jobs are empty.');
       return RSVP.resolve();
@@ -187,6 +185,7 @@ export default Ember.Object.extend({
     var type       = store.modelFor(typeName);
 
     var adapter    = store.adapterFor(typeName);
+    var remoteCRUD = adapter.get('fryctoria');
 
     var record     = createRecordFromJob(syncer, job, type);
     var snapshot   = record._createSnapshot();
@@ -196,13 +195,13 @@ export default Ember.Object.extend({
     var syncedRecord;
 
     if(operation === 'delete') {
-      syncedRecord = adapter.deleteRecord(store, type, snapshot);
+      syncedRecord = remoteCRUD.deleteRecord.call(adapter, store, type, snapshot);
 
     } else if(operation === 'update') {
       // TODO: make reverse update possible
       // for now, we do not accept 'reverse update' i.e. update from the server
       // will not be reflected in the store
-      syncedRecord = adapter.updateRecord(store, type, snapshot);
+      syncedRecord = remoteCRUD.updateRecord.call(adapter, store, type, snapshot);
 
     } else if(operation === 'create') {
       // TODO: make reverse update possible
@@ -213,7 +212,7 @@ export default Ember.Object.extend({
       snapshot = record._createSnapshot();
 
       // adapter -> store -> syncer(remoteId) -> localforage
-      syncedRecord = adapter.createRecord(store, type, snapshot)
+      syncedRecord = remoteCRUD.createRecord.call(adapter, store, type, snapshot)
         .then(updateIdInStore)
         .then(createRemoteIdRecord)
         .then(refreshLocalRecord)

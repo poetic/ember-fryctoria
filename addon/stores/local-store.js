@@ -1,6 +1,7 @@
 import DS           from 'ember-data';
 import LFAdapter    from 'ember-localforage-adapter/adapters/localforage';
 import LFSerializer from 'ember-localforage-adapter/serializers/localforage';
+import generateUniqueId from '../utils/generate-unique-id';
 
 /**
  *
@@ -10,10 +11,15 @@ import LFSerializer from 'ember-localforage-adapter/serializers/localforage';
 export default DS.Store.extend({
   init: function() {
     var container  = this.get('container');
-    var adapter    = LFAdapter.create({ container: container });
-    var serializer = LFSerializer.create({ container: container });
 
-    adapter.set('serializer', serializer);
+    var serializer = LFSerializer.create({ container: container });
+    var adapter    = LFAdapter
+      .extend({generateIdForRecord: generateUniqueId})
+      .create({
+        container: container,
+        serializer: serializer
+      });
+
     this.set('adapter', adapter);
 
     this._super.apply(this, arguments);

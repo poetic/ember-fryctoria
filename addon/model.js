@@ -1,9 +1,4 @@
 import DS               from 'ember-data';
-import isOffline        from './utils/is-offline';
-import generateUniqueId from './utils/generate-unique-id';
-import Ember            from 'ember';
-
-var Promise = Ember.RSVP.Promise;
 
 export default DS.Model.extend({
   /**
@@ -18,13 +13,11 @@ export default DS.Model.extend({
       .then(function() {
         return _superSave.call(record);
       })
-      .then(syncDown)
-      .catch(function(error) {
-        return useLocalIfOffline(error, record, _superSave);
-      });
+      .then(syncDown);
   }
 });
 
+// TODO: There is unncecssary update when we use localforage adapter
 function syncDown(record) {
   var localAdapter = record.get('container').lookup('store:local').get('adapter');
   var snapshot     = record._createSnapshot();
@@ -36,27 +29,4 @@ function syncDown(record) {
   }
 
   return record;
-}
-
-function useLocalIfOffline(error, record, _superSave) {
-  var isOnline = !isOffline(error && error.status);
-  if(isOnline) {
-    return Promise.reject(error);
-  }
-
-  var store = record.get('store');
-
-  store.set('fryctoria.isOffline', true);
-
-  // Make sure record has an id
-  // https://github.com/emberjs/data/blob/1.0.0-beta.15/packages/ember-data/lib/system/store.js#L1289
-  // NOTE: when we create a record, it does not have an id yet, we need to
-  // generate one
-  if(!record.get('id')) {
-    store.updateId(record, {id: generateUniqueId()});
-  }
-
-  store.get('syncer').createJob(record);
-
-  return _superSave.call(record);
 }

@@ -53,6 +53,8 @@ export default DS.Store.extend({
   // fetchById use the following methods:
   // find -> findById
   // model#reload -> store#reloadRecord
+  // NOTE: this will trigger syncUp twice, this is OK. And since this is
+  // a public method, we probably want to preserve this.
   fetchById: function(typeName, id, preload) {
     var store           = this;
     var _superFetchById = this.__nextSuper;
@@ -154,9 +156,4 @@ export default DS.Store.extend({
   //   var serializer = this._super(type);
   //   return decorateSerializer(serializer, this.container);
   // },
-
-  createRecord: function() {
-    this.set('fryctoria.isOffline', false);
-    return this._super.apply(this, arguments);
-  }
 });

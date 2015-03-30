@@ -64,7 +64,7 @@ describe('Acceptance: User Delete', function() {
       // otherwise we would get strange error when destroying the app.
       andLater(function() {
         done();
-      });
+      }, 1000);
     });
   });
 });
