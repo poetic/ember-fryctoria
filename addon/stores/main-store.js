@@ -128,14 +128,32 @@ export default DS.Store.extend({
   },
 
   adapterFor: function(type) {
-    var adapter = this._super(type);
-    return decorateAdapter(adapter, this.container);
+     if(this.get('fryctoria.isOffline')) {
+       return this.get('fryctoria.localAdapter');
+     } else {
+       var adapter = this._super(type);
+       return decorateAdapter(adapter, this.container);
+     }
   },
 
   serializerFor: function(type) {
-    var serializer = this._super(type);
-    return decorateSerializer(serializer, this.container);
+     if(this.get('fryctoria.isOffline')) {
+       return this.get('fryctoria.localSerializer');
+     } else {
+       var serializer = this._super(type);
+       return decorateSerializer(serializer, this.container);
+     }
   },
+
+  // adapterFor: function(type) {
+  //   var adapter = this._super(type);
+  //   return decorateAdapter(adapter, this.container);
+  // },
+
+  // serializerFor: function(type) {
+  //   var serializer = this._super(type);
+  //   return decorateSerializer(serializer, this.container);
+  // },
 
   createRecord: function() {
     this.set('fryctoria.isOffline', false);
