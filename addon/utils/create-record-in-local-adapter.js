@@ -1,4 +1,3 @@
-// This is independent of state of store.fryctoria.isOffline
 export default function createRecordInLocalAdapter(store, type, record) {
   var container    = store.container;
   var localAdapter = container.lookup('store:local').get('adapter');

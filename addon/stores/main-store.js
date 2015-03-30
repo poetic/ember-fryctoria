@@ -11,23 +11,6 @@ import reloadLocalRecords         from '../utils/reload-local-records';
  * @extends DS.Store
  */
 export default DS.Store.extend({
-  fryctoria: {
-    isOffline:       false,
-    localAdapter:    null,
-    localSerializer: null,
-  },
-
-  init: function() {
-    var localStore      = this.container.lookup('store:local');
-    var localAdapter    = localStore.get('adapter');
-    var localSerializer = localAdapter.get('serializer');
-
-    this.set('fryctoria.localAdapter',    localAdapter);
-    this.set('fryctoria.localSerializer', localSerializer);
-
-    this._super.apply(this, arguments);
-  },
-
   /**
     This method returns a fresh collection from the server, regardless of if there is already records
     in the store or not.
@@ -50,11 +33,13 @@ export default DS.Store.extend({
       });
   },
 
-  // fetchById use the following methods:
-  // find -> findById
-  // model#reload -> store#reloadRecord
-  // NOTE: this will trigger syncUp twice, this is OK. And since this is
-  // a public method, we probably want to preserve this.
+  /*
+   * fetchById use the following methods:
+   * find -> findById
+   * model#reload -> store#reloadRecord
+   * NOTE: this will trigger syncUp twice, this is OK. And since this is
+   *  a public method, we probably want to preserve this.
+   */
   fetchById: function(typeName, id, preload) {
     var store           = this;
     var _superFetchById = this.__nextSuper;
@@ -70,13 +55,10 @@ export default DS.Store.extend({
   },
 
   /**
-   * Used by:
-   *   #find(<- #fetchById)
-   *   #findByIds(private, orphan)
-   */
-
-  /**
     This method returns a record for a given type and id combination.
+    It is Used by:
+      #find(<- #fetchById)
+      #findByIds(private, orphan)
     @method findById
     @private
     @param {String or subclass of DS.Model} type
@@ -130,30 +112,12 @@ export default DS.Store.extend({
   },
 
   adapterFor: function(type) {
-     if(this.get('fryctoria.isOffline')) {
-       return this.get('fryctoria.localAdapter');
-     } else {
-       var adapter = this._super(type);
-       return decorateAdapter(adapter, this.container);
-     }
+    var adapter = this._super(type);
+    return decorateAdapter(adapter, this.container);
   },
 
   serializerFor: function(type) {
-     if(this.get('fryctoria.isOffline')) {
-       return this.get('fryctoria.localSerializer');
-     } else {
-       var serializer = this._super(type);
-       return decorateSerializer(serializer, this.container);
-     }
+    var serializer = this._super(type);
+    return decorateSerializer(serializer, this.container);
   },
-
-  // adapterFor: function(type) {
-  //   var adapter = this._super(type);
-  //   return decorateAdapter(adapter, this.container);
-  // },
-
-  // serializerFor: function(type) {
-  //   var serializer = this._super(type);
-  //   return decorateSerializer(serializer, this.container);
-  // },
 });
