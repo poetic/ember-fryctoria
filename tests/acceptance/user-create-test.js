@@ -11,7 +11,7 @@ import startApp from '../helpers/start-app';
 
 var App, store;
 
-describe('Acceptance: User Create', function() {
+describe('Acceptance: User Create  ', function() {
   beforeEach(function() {
     App = startApp();
     store = App.__container__.lookup('store:main');

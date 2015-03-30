@@ -11,6 +11,9 @@ ember-fryctoria extends the ember [data store](http://emberjs.com/api/data/class
 It utilizes [ember-localforage-adapter](https://github.com/genkgo/ember-localforage-adapter/) to read and write locally.
 Inspired by [ember-sync](https://github.com/kurko/ember-sync) we create a queue of jobs when the user create, update or delete in offline mode. When online we flush this queue to keep the server in sync.
 
+# NOTE:
+serializer.adapter is not supported, in most case it should be fine.
+
 # TODO:
 1. <del>create an application store</del>
 1. <del>overwrite methods in DS.Store</del>

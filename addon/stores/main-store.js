@@ -1,12 +1,8 @@
 import DS    from 'ember-data';
-import Ember from 'ember';
 import decorateAdapter    from './decorate-adapter';
 import decorateSerializer from './decorate-serializer';
-import isOffline                  from '../utils/is-offline';
 import createRecordInLocalAdapter from '../utils/create-record-in-local-adapter';
 import reloadLocalRecords         from '../utils/reload-local-records';
-
-var Promise = Ember.RSVP.Promise;
 
 /**
  * This will be used as store:main
@@ -53,11 +49,8 @@ export default DS.Store.extend({
         return _superFetchAll.call(store, type);
       })
       .then(function(records) {
-        reloadLocalRecords(store.get('container'), type);
+        reloadLocalRecords(store.container, type);
         return records;
-      })
-      .catch(function(error) {
-        return useLocalIfOffline(error, store, _superFetchAll, [type]);
       });
   },
 
@@ -75,9 +68,6 @@ export default DS.Store.extend({
       .then(function(record) {
         createRecordInLocalAdapter(store, typeName, record);
         return record;
-      })
-      .catch(function(error) {
-        return useLocalIfOffline(error, store, _superFetchById, [typeName, id, preload]);
       });
   },
 
@@ -107,19 +97,6 @@ export default DS.Store.extend({
       .then(function(record) {
         createRecordInLocalAdapter(store, typeName, record);
         return record;
-      })
-      .catch(function(error) {
-        // NOTE: we need to change the state when to try to fetch a new record,
-        // since the state is now loading after a failure attempt.
-        function findByIdLocal() {
-          // NOTE: can not do getById
-          var record = store.all(typeName).findBy('id', id);
-          if(record) {
-            record.transitionTo('empty');
-          }
-          return _superFindById.apply(store, arguments);
-        }
-        return useLocalIfOffline(error, store, findByIdLocal, [typeName, id, preload]);
       });
   },
 
@@ -151,28 +128,17 @@ export default DS.Store.extend({
       .then(function(record) {
         createRecordInLocalAdapter(store, typeName, record);
         return record;
-      })
-      .catch(function(error) {
-        return useLocalIfOffline(error, store, _superReloadRecord, [record]);
       });
   },
 
   adapterFor: function(type) {
-    if(this.get('fryctoria.isOffline')) {
-      return this.get('fryctoria.localAdapter');
-    } else {
-      var adapter = this._super(type);
-      return decorateAdapter(adapter);
-    }
+    var adapter = this._super(type);
+    return decorateAdapter(adapter, this.container);
   },
 
   serializerFor: function(type) {
-    if(this.get('fryctoria.isOffline')) {
-      return this.get('fryctoria.localSerializer');
-    } else {
-      var serializer = this._super(type);
-      return decorateSerializer(serializer);
-    }
+    var serializer = this._super(type);
+    return decorateSerializer(serializer, this.container);
   },
 
   createRecord: function() {
@@ -180,12 +146,3 @@ export default DS.Store.extend({
     return this._super.apply(this, arguments);
   }
 });
-
-function useLocalIfOffline(error, store, localFn, _arguments) {
-  if(isOffline(error && error.status)) {
-    store.set('fryctoria.isOffline', true);
-    return localFn.apply(store, _arguments);
-  } else {
-    return Promise.reject(error);
-  }
-}
