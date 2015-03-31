@@ -27,8 +27,7 @@ store.syncer.syncUp();
 ```
 You can also capture records into localforage from ember-data store by doing this:
 ```javascript
-store.syncer.syncDown('user'); // remove all records in localforage and save all
-current user records in localforage
+store.syncer.syncDown('user'); // remove all records in localforage and save all current user records in localforage
 store.syncer.syncDown(user); // create or update user record into localforage
 store.syncer.syncDown([user1, user2]); // create or update user records into localforage
 ```
