@@ -9,6 +9,9 @@ ember addon:install ember-fryctoria
 ```
 ### Step2: Offline!
 
+# Requirements
+ember-data v1.0.0-beta.16.x
+
 
 # How does it work?
 ember-fryctoria utilizes [ember-localforage-adapter](https://github.com/genkgo/ember-localforage-adapter/) to read and write locally.
