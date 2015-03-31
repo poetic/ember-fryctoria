@@ -5,6 +5,7 @@ beta version very soon.
 # Instruction
 ### Step1: Install the addon.
 ```bash
+ember addon:install ember-localforage-adapter
 ember addon:install ember-fryctoria
 ```
 ### Step2: Offline!
