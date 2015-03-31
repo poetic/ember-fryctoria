@@ -25,7 +25,7 @@ export default function decorateAPICall(finderType) {
 
     function syncDown(result) {
       if(finderType === 'all') {
-        var typeName = result.get('firstObject.constructor.typeKey');
+        var typeName = result.get('type.typeKey');
         syncer.syncDown(typeName);
 
       } else if(finderType === 'single'){

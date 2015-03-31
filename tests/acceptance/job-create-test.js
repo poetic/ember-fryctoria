@@ -39,7 +39,7 @@ describe('Acceptance: Job(belongsTo) Create', function() {
     });
 
     userPromise.save().then(function(user) {
-      var jobPromise = store.createRecord('job', {name: jobName, user: user}).save();
+      jobPromise = store.createRecord('job', {name: jobName, user: user}).save();
       return jobPromise;
 
     }).then(function(job) {
@@ -54,7 +54,6 @@ describe('Acceptance: Job(belongsTo) Create', function() {
       expect(jobCreated.get('user.id')).not.to.include('fryctoria', 'Record should have a remoteId instead of a generated one');
       return jobCreated;
     }).then(function(job) {
-      // cleanup
       var user = job.get('user');
       return RSVP.all([job.destroyRecord(), user.destroyRecord()]);
 

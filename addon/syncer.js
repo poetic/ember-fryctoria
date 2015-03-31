@@ -1,7 +1,6 @@
 import Ember from 'ember';
 import isOffline                  from './utils/is-offline';
 import generateUniqueId           from './utils/generate-unique-id';
-import createRecordInLocalAdapter from './utils/create-record-in-local-adapter';
 import reloadLocalRecords         from './utils/reload-local-records';
 import isModelInstance            from './utils/is-model-instance';
 
@@ -127,17 +126,21 @@ export default Ember.Object.extend({
   },
 
   /**
+   * This method does not talk to remote store, it only need to get serializer
+   * from a store.
+   *
    * @method
    * @private
    */
   syncDownRecord: function(record) {
-    var localAdapter = this.lookupStore('local').get('adapter');
+    var localStore   = this.lookupStore('local');
+    var localAdapter = localStore.get('adapter');
     var snapshot     = record._createSnapshot();
 
     if(record.get('isDeleted')) {
-      return localAdapter.deleteRecord(null, snapshot.type, snapshot);
+      return localAdapter.deleteRecord(localStore, snapshot.type, snapshot);
     } else {
-      return localAdapter.createRecord(null, snapshot.type, snapshot);
+      return localAdapter.createRecord(localStore, snapshot.type, snapshot);
     }
   },
 
@@ -270,6 +273,7 @@ export default Ember.Object.extend({
       });
     }
 
+    // This method does not talk to store, only to adapter
     function refreshLocalRecord(recordExtracted) {
       // NOTE: we should pass snapshot instead of rawRecord to deleteRecord,
       // in deleteRecord, we only call snapshot.id, we can just pass the
@@ -278,14 +282,15 @@ export default Ember.Object.extend({
       // delete existing record with localId
       var localStore   = syncer.lookupStore('local');
       var localAdapter = localStore.get('adapter');
+
       return localAdapter.deleteRecord(
         localStore, type, {id: recordIdBeforeCreate}
-
       ).then(function() {
+
         // create new record with remoteId
         record.set('id', recordExtracted.id);
-        return createRecordInLocalAdapter(store, type, record);
-
+        var snapshot = record._createSnapshot();
+        return localAdapter.createRecord(localStore, type, snapshot);
       });
     }
   },

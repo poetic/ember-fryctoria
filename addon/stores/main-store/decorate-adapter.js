@@ -66,6 +66,7 @@ function createBackupMethod(localAdapter, methodName) {
       // decorate snapshot for serializer#serialize, this should be after
       // createJob in syncer
       snapshot.fryctoria = true;
+      args[2] = snapshot;
     }
     // ---------- CRUD specific END
 
