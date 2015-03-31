@@ -33,7 +33,7 @@
     "ember-cli-uglify": "1.0.1",
     "ember-data": "1.0.0-beta.16.1",
     "ember-export-application-global": "^1.0.2",
-    "ember-localforage-adapter": "Chun-Yang/ember-localforage-adapter#398e423c324b9047c93b9ed5fa89f92d8a151a2e",
+    "ember-localforage-adapter": "0.6.9",
     "express": "^4.8.5",
     "glob": "^4.0.5",
     "morgan": "^1.5.2"
