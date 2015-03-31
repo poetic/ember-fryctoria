@@ -73,6 +73,7 @@ export default Ember.Object.extend({
   createJob: function(operation, snapshot) {
     var typeName = snapshot.typeKey;
     var serializer = this.lookupStore('main').serializerFor(typeName);
+    snapshot.fryctoria = true;
 
     return this.create('job', {
       id:        generateUniqueId('job'),

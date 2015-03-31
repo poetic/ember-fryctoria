@@ -16,7 +16,7 @@ export default function decorateSerializer(serializer, container) {
   // serialize()
   // extract()
   // normalize() is not used in localforage adapter, so we do not decorate
-  decorateSerializerMethod(serializer, localSerializer, 'serialize', 1);
+  decorateSerializerMethod(serializer, localSerializer, 'serialize', 0);
   decorateSerializerMethod(serializer, localSerializer, 'extract',   2);
   // decorateSerializerMethod(serializer, localSerializer, 'normalize', 2);
 
