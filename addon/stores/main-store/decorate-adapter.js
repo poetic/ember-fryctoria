@@ -53,6 +53,7 @@ function createBackupMethod(localAdapter, methodName) {
   return function backupMethod() {
     var args = Array.prototype.slice.call(arguments);
 
+    // ---------- CRUD specific
     if(isCRUD) {
       var snapshot = args[2];
 
@@ -66,6 +67,7 @@ function createBackupMethod(localAdapter, methodName) {
       // createJob in syncer
       snapshot.fryctoria = true;
     }
+    // ---------- CRUD specific END
 
     return localAdapter[methodName].apply(localAdapter, args)
       .then(function(payload) {
