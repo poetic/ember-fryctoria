@@ -58,16 +58,17 @@ describe('Acceptance: Job(belongsTo) Create', function() {
       return RSVP.all([job.destroyRecord(), user.destroyRecord()]);
 
     }).then(function() {
-      setOnlineStatus(false);
-      return RSVP.all([store.find('user'), store.find('job')]);
-
-    }).then(function(data) {
+      // wait untill job and user are deleted locally
       andLater(function() {
-        var user = data[0].findBy('name', userName);
-        var job  = data[1].findBy('name', jobName);
-        expect(user).not.to.exist();
-        expect(job).not.to.exist();
+        setOnlineStatus(false);
+        return RSVP.all([store.find('user'), store.find('job')]).then(function(data) {
+          var user = data[0].findBy('name', userName);
+          var job  = data[1].findBy('name', jobName);
+          expect(user).not.to.exist();
+          expect(job).not.to.exist();
+        });
       }, 1000);
+
     }).then(function() {
       // NOTE: wait until saveLocal is finished,
       // otherwise we would get strange error when destroying the app.
