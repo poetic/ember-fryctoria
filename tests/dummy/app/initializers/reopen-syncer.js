@@ -1,11 +1,25 @@
 import Ember from 'ember';
 
 export function initialize(container, application) {
-  // Remove all jobs once there is an error
-  // var syncer = container.lookup('syncer:main');
+  var syncer = container.lookup('syncer:main');
+
+  /*
+   * Handle errors when tyring to syncUp
+   * Remove all jobs once there is an error and restart your app
+   */
   // syncer.reopen({
   //   handleSyncError: function(error) {
-  //     return Ember.RSVP.reject('clear');
+  //     this.delete
+  //   }
+  // });
+
+  /*
+   * Decide what is offline
+   * The following is the default behavior
+   */
+  // syncer.reopen({
+  //   isOffline: function(error) {
+  //     return error && error.status === 0;
   //   }
   // });
 }

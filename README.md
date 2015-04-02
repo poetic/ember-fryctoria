@@ -62,7 +62,19 @@ behavior by adding a initializer and add a handleSyncError method in syncer.
 
 The initializer *initializers/reopen-syncer.js* should already be created when you
 install the addon via ember-cli. You can modify the handleSyncError method to
-handle errors. For example, you can remove all jobs when you get an error during syncUp.
+handle errors.
+
+For example, you can remove all jobs when you get an error during syncUp. And
+then restart your app by ```App.destroy()```,
+since the outdated records in ember data store may create
+errors when the user try to operate these records.
+WARNING: This strategy will remove all the operations by user when he/her
+was offline.
+
+IMO, there is really not a single robust way to handle syncing faliure for
+a conventional database like SQL combined with ember data. I would recommand you
+to only enable user to read while offline. Or you should implement a robust way
+to handle syncing errors for a specific app.
 
 # How to decide what is offline?
 By default, whenever we have ```error.status === 0```, we define it as offline.
