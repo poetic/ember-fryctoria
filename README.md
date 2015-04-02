@@ -76,7 +76,7 @@ a conventional database like SQL combined with ember data. I would recommand you
 to only enable user to read while offline. Or you should implement a robust way
 to handle syncing errors for a specific app.
 
-# How to decide what is offline?
+# How to decide what is offline?(Need implementation)
 By default, whenever we have ```error.status === 0```, we define it as offline.
 You can overwrite this behavior by overwriting *isOffline* method in the syncer.
 Again, you can do this in reopen-syncer initializer.

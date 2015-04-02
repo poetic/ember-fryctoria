@@ -47,6 +47,6 @@
   ],
   "ember-addon": {
     "configPath": "tests/dummy/config",
-    "defaultBlueprint": "application-store"
+    "defaultBlueprint": ["application-store", "reopen-syncer-initializer"]
   }
 }
