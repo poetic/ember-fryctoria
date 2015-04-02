@@ -177,17 +177,14 @@ export default Ember.Object.extend({
 
     .then(function() {
       syncer.deleteAll('remoteIdRecord');
-    })
-
-    .then(function() {
       Ember.Logger.info('Syncing succeed.');
     })
 
     .catch(function(error) {
       if(isOffline(error && error.status)) {
         Ember.Logger.info('Can not connect to server, stop syncing');
-      } else if(error === 'clear'){
-        return syncer.deleteAll('job');
+      } else if(syncer.handleSyncError){
+        return syncer.handleSyncError(error);
       } else {
         return RSVP.reject(error);
       }
@@ -233,14 +230,7 @@ export default Ember.Object.extend({
       syncedRecord = remoteCRUD.createRecord.call(adapter, store, type, snapshot)
         .then(updateIdInStore)
         .then(createRemoteIdRecord)
-        .then(refreshLocalRecord)
-        .catch(function(error) {
-          if(syncer.syncErrorHandler) {
-            return syncer.syncErrorHandler(error);
-          } else {
-            return RSVP.reject(error);
-          }
-        });
+        .then(refreshLocalRecord);
     }
 
     // delete from db after syncing success
