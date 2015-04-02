@@ -3,10 +3,11 @@ Currently this addon is still in development yet. We are going to release a
 beta version very soon.
 
 # Instruction
-### Step1: Install the addons.
+### Step1: Install the addons, generate an initializer
 ```bash
 ember addon:install ember-localforage-adapter
 ember addon:install ember-fryctoria
+ember g reopen-syncer-initializer
 ```
 ### Step2: Offline!
 
@@ -58,11 +59,8 @@ store.syncer.syncDown([user1, user2]); // create or update user records into loc
 # How to handle errors during syncUp?
 By default, when we get an error during syncUp, syncer will stop syncing. In the
 next syncUp, syncer will try to start from the failed job. You can change this
-behavior by adding a initializer and add a handleSyncError method in syncer.
-
-The initializer *initializers/reopen-syncer.js* should already be created when you
-install the addon via ember-cli. You can modify the handleSyncError method to
-handle errors.
+behavior by adding a initializer  ```ember g reopen-syncer-initializer```
+and add a handleSyncError method in syncer.
 
 For example, you can remove all jobs when you get an error during syncUp. And
 then restart your app by ```App.destroy()```,
@@ -79,4 +77,4 @@ to handle syncing errors for a specific app.
 # How to decide what is offline?(Need implementation)
 By default, whenever we have ```error.status === 0```, we define it as offline.
 You can overwrite this behavior by overwriting *isOffline* method in the syncer.
-Again, you can do this in reopen-syncer initializer.
+Again, you can do this in reopen-syncer initializer ```ember g reopen-syncer-initializer```.

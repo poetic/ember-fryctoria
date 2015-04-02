@@ -1,6 +1,6 @@
 {
   "name": "ember-fryctoria",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Make ember data work offline with automatic sync.",
   "directories": {
     "doc": "doc",
@@ -47,6 +47,6 @@
   ],
   "ember-addon": {
     "configPath": "tests/dummy/config",
-    "defaultBlueprint": ["application-store", "reopen-syncer-initializer"]
+    "defaultBlueprint": "application-store"
   }
 }
