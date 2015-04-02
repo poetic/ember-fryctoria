@@ -9,7 +9,8 @@ export function initialize(container, application) {
    */
   // syncer.reopen({
   //   handleSyncError: function(error) {
-  //     this.delete
+  //     this.reset(); // delete all jobs.
+  //     application.reset(); // reset application. A reload is recommended.
   //   }
   // });
 

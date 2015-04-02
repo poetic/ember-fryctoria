@@ -145,6 +145,11 @@ export default Ember.Object.extend({
     }
   },
 
+  reset: function() {
+    this.deleteAll('jobs');
+    this.deleteAll('remoteIdRecord');
+  },
+
   /**
    * Attampt to run all the jobs one by one. It will stop when all jobs are
    * processed or one of the three errors:
