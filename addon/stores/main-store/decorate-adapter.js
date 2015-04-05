@@ -18,14 +18,11 @@ export default function decorateAdapter(adapter, container) {
   // findAll()
   // findQuery()
   // findMany()
-  // findHasMany()
-  // findBelongsTo()
   // createRecord()
   // updateRecord()
   // deleteRecord()
   var methods = [
     'find', 'findAll', 'findQuery', 'findMany',
-    'findHasMany', 'findBelongsTo',
     'createRecord', 'updateRecord', 'deleteRecord'
   ];
 
