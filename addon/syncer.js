@@ -43,7 +43,7 @@ export default Ember.Object.extend({
   /**
    * Initialize db.
    *
-   * Initialize jobs, remoteIdRecords. Either from localforage or emmpty array.
+   * Initialize jobs, remoteIdRecords.
    *
    * @method init
    * @private
@@ -51,7 +51,12 @@ export default Ember.Object.extend({
   init: function() {
     var syncer = this;
 
-    syncer.set('db', window.localforage);
+    var localStore   = syncer.get('container').lookup('store:local');
+    var localAdapter = localStore.get('adapter');
+
+    syncer.set('db',           window.localforage);
+    syncer.set('localStore',   localStore);
+    syncer.set('localAdapter', localAdapter);
 
     // NOTE: get remoteIdRecords first then get jobs,
     // since jobs depend on remoteIdRecords
@@ -71,7 +76,7 @@ export default Ember.Object.extend({
    */
   createJob: function(operation, snapshot) {
     var typeName = snapshot.typeKey;
-    var serializer = this.lookupStore('main').serializerFor(typeName);
+    var serializer = this.get('mainStore').serializerFor(typeName);
     snapshot.fryctoria = true;
 
     return this.create('job', {
@@ -126,15 +131,19 @@ export default Ember.Object.extend({
   },
 
   /**
-   * Reset syncer and localforage adapter.
+   * Reset syncer and localforage records.
    * Remove all jobs and remoteIdRecords.
-   * TODO: remove all records in localforage
+   * Remove all records in localforage.
    *
    * @method
    * @public
    */
   reset: function() {
-    return RSVP.all([this.deleteAll('job'), this.deleteAll('remoteIdRecord')]);
+    return RSVP.all([
+      this.deleteAll('job'),
+      this.deleteAll('remoteIdRecord'),
+      this.get('localAdapter').clear()
+    ]);
   },
 
   /**
@@ -155,8 +164,8 @@ export default Ember.Object.extend({
    * @private
    */
   syncDownRecord: function(record) {
-    var localStore   = this.lookupStore('local');
-    var localAdapter = localStore.get('adapter');
+    var localStore   = this.get('localStore');
+    var localAdapter = this.get('localAdapter');
     var snapshot     = record._createSnapshot();
 
     if(record.get('isDeleted')) {
@@ -211,7 +220,7 @@ export default Ember.Object.extend({
   runJob: function(job) {
     var syncer     = this;
 
-    var store      = syncer.lookupStore('main');
+    var store      = syncer.get('mainStore');
 
     var typeName   = job.typeName;
     var type       = store.modelFor(typeName);
@@ -288,8 +297,8 @@ export default Ember.Object.extend({
       // rawRecord to it.
 
       // delete existing record with localId
-      var localStore   = syncer.lookupStore('local');
-      var localAdapter = localStore.get('adapter');
+      var localStore   = syncer.get('localStore');
+      var localAdapter = syncer.get('localAdapter');
 
       return localAdapter.deleteRecord(
         localStore, type, {id: recordIdBeforeCreate}
@@ -303,9 +312,10 @@ export default Ember.Object.extend({
     }
   },
 
-  lookupStore: function(storeName) {
-    return this.get('container').lookup('store:' + storeName);
-  },
+  // lazy evaluate main store, since main store is initialized after syncer
+  mainStore: Ember.computed(function() {
+    return this.get('container').lookup('store:main');
+  }),
 
   getRemoteId: function(typeName, id) {
     Ember.assert('Id can not be blank.', !Ember.isNone(id));
@@ -368,11 +378,11 @@ function pluralize(typeName) {
 }
 
 function getNamespace(typeName) {
-  if(typeName === 'job') {
-    return 'EmberFryctoriaJobs';
-  } else if(typeName === 'remoteIdRecord') {
-    return 'EmberFryctoriaRemoteIdRecords';
-  }
+  var LocalForageKeyHash = {
+    'job':            'EmberFryctoriaJobs',
+    'remoteIdRecord': 'EmberFryctoriaRemoteIdRecords',
+  };
+  return LocalForageKeyHash[typeName];
 }
 
 function isRemoteId(id) {
@@ -421,9 +431,9 @@ function addRelationshipToRecord(name, descriptor, jobRecord, record, syncer) {
 }
 
 function getOrCreateRecord(syncer, type, id) {
-  var store = syncer.lookupStore('main');
+  var mainStore = syncer.get('mainStore');
 
-  return store.getById(type.typeKey, id) ||
+  return mainStore.getById(type.typeKey, id) ||
          createRecordInLocalStore(syncer, type, id);
 }
 
@@ -432,7 +442,7 @@ function createRecordInLocalStore(syncer, type, id) {
   // after create, the state becomes "root.empty"
   var record = type._create({
     id:        id,
-    store:     syncer.lookupStore('local'),
+    store:     syncer.get('localStore'),
     container: syncer.get('container'),
   });
 

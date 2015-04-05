@@ -17,7 +17,8 @@ export default DS.Store.extend({
       .extend({generateIdForRecord: generateUniqueId})
       .create({
         container: container,
-        serializer: serializer
+        serializer: serializer,
+        clear: clearLFAdapter
       });
 
     this.set('adapter', adapter);
@@ -39,3 +40,14 @@ export default DS.Store.extend({
     return this.get('adapter');
   },
 });
+
+function clearLFAdapter() {
+  // clear cache
+  var cache = this.get('cache');
+  if(cache) {
+    cache.clear();
+  }
+
+  // clear data in localforage
+  return window.localforage.setItem('DS.LFAdapter', []);
+}
