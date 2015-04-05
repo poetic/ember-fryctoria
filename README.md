@@ -60,7 +60,7 @@ store.syncer.syncDown([user1, user2]); // create or update user records into loc
 By default, when we get an error during syncUp, syncer will stop syncing. In the
 next syncUp, syncer will try to start from the failed job. You can change this
 behavior by adding a initializer  ```ember g reopen-syncer-initializer```
-and add a handleSyncError method in syncer.
+and overwrite *handleSyncUpError* method in syncer.
 
 For example, you can remove all jobs when you get an error during syncUp. And
 then restart your app by ```App.destroy()```,

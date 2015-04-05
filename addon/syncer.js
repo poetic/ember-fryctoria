@@ -200,8 +200,8 @@ export default Ember.Object.extend({
     .catch(function(error) {
       if(syncer.isOffline(error)) {
         Ember.Logger.info('Can not connect to server, stop syncing');
-      } else if(syncer.handleSyncError){
-        return syncer.handleSyncError(error);
+      } else if(syncer.handleSyncUpError){
+        return syncer.handleSyncUpError(error);
       } else {
         return RSVP.reject(error);
       }

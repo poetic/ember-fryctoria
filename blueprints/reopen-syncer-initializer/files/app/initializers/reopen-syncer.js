@@ -8,7 +8,7 @@ export function initialize(container, application) {
    * Remove all jobs once there is an error and restart your app
    */
   // syncer.reopen({
-  //   handleSyncError: function(error) {
+  //   handleSyncUpError: function(error) {
   //     this.reset(); // delete all jobs.
   //     application.reset(); // reset application. A reload is recommended.
   //   }
