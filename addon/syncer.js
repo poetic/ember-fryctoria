@@ -146,16 +146,11 @@ export default Ember.Object.extend({
   },
 
   reset: function() {
-    this.deleteAll('jobs');
-    this.deleteAll('remoteIdRecord');
+    return RSVP.all([this.deleteAll('job'), this.deleteAll('remoteIdRecord')]);
   },
 
   /**
-   * Attampt to run all the jobs one by one. It will stop when all jobs are
-   * processed or one of the three errors:
-   * 1. offline: resolve
-   * 2. 'clear': clear all the jobs and resolve
-   * 3. other error: reject
+   * Attampt to run all the jobs one by one. Deal with syncing failure.
    *
    * @method runAllJobs
    * @private
