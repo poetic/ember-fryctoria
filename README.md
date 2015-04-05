@@ -21,7 +21,7 @@ It always try to connect to the server and fall back to local data when an offli
 
 When online, it will use your defalut store, adapter and serializer. After each request to server, it will automatically save records into localforage-adapter.
 
-When offline, it will use the local backup via localforage-adapter to retrive records (e.g. store.find). A queue of jobs is created when the user create, update or delete while offline. When online we flush this queue to keep the server in sync.
+When offline, it will use the local backup(localforage-adapter) to retrive records. A queue of jobs is created when the user create, update or delete while offline. When online we flush this queue to keep the server in sync.
 
 **Features NOT supported(yet):**
 - Sideloaded records are not saved to localforage automatically, only the main
@@ -58,23 +58,19 @@ store.syncer.syncDown([user1, user2]); // create or update user records into loc
 
 # How to handle errors during syncUp?
 By default, when we get an error during syncUp, syncer will stop syncing. In the
-next syncUp, syncer will try to start from the failed job. You can change this
-behavior by adding a initializer  ```ember g reopen-syncer-initializer```
-and overwrite *handleSyncUpError* method in syncer.
+next syncUp, syncer will retry starting from the failed job.
 
-For example, you can remove all jobs when you get an error during syncUp. And
-then restart your app by ```App.destroy()```,
-since the outdated records in ember data store may create
-errors when the user try to operate these records.
-WARNING: This strategy will remove all the operations by user when he/her
-was offline.
+You can customize this by overwriting *handleSyncUpError* method in syncer in
+reopen-syncer-initializer.
 
 IMO, there is really not a single robust way to handle syncing faliure for
 a conventional database like SQL combined with ember data. I would recommand you
 to only enable user to read while offline. Or you should implement a robust way
-to handle syncing errors for a specific app.
+to handle syncing errors for your app.
 
 # How to decide what is offline?
-By default, whenever we have ```error.status === 0```, we define it as offline.
-You can overwrite this behavior by overwriting *isOffline* method in the syncer.
-Again, you can do this in reopen-syncer initializer ```ember g reopen-syncer-initializer```.
+By default, offline is defined by ```jqXHR && jqXHR.status === 0```.
+[jqXHR](http://api.jquery.com/jQuery.ajax/#jqXHR)
+
+You can overwrite this by overwriting *isOffline* method in syncer in
+reopen-syncer-initializer.
