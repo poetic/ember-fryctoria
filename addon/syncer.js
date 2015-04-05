@@ -1,5 +1,4 @@
 import Ember from 'ember';
-import isOffline                  from './utils/is-offline';
 import generateUniqueId           from './utils/generate-unique-id';
 import reloadLocalRecords         from './utils/reload-local-records';
 import isModelInstance            from './utils/is-model-instance';
@@ -127,6 +126,28 @@ export default Ember.Object.extend({
   },
 
   /**
+   * Reset syncer and localforage adapter.
+   * Remove all jobs and remoteIdRecords.
+   * TODO: remove all records in localforage
+   *
+   * @method
+   * @public
+   */
+  reset: function() {
+    return RSVP.all([this.deleteAll('job'), this.deleteAll('remoteIdRecord')]);
+  },
+
+  /**
+   * Decide if the error indicates offline
+   *
+   * @method
+   * @public
+   */
+  isOffline: function(error) {
+    return error && error.status === 0;
+  },
+
+  /**
    * This method does not talk to remote store, it only need to get serializer
    * from a store.
    *
@@ -143,10 +164,6 @@ export default Ember.Object.extend({
     } else {
       return localAdapter.createRecord(localStore, snapshot.type, snapshot);
     }
-  },
-
-  reset: function() {
-    return RSVP.all([this.deleteAll('job'), this.deleteAll('remoteIdRecord')]);
   },
 
   /**
@@ -181,7 +198,7 @@ export default Ember.Object.extend({
     })
 
     .catch(function(error) {
-      if(isOffline(error && error.status)) {
+      if(syncer.isOffline(error)) {
         Ember.Logger.info('Can not connect to server, stop syncing');
       } else if(syncer.handleSyncError){
         return syncer.handleSyncError(error);

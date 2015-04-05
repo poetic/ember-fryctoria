@@ -39,9 +39,11 @@ export default function decorateAdapter(adapter, container) {
 function decorateAdapterMethod(adapter, localAdapter, methodName) {
   var originMethod = adapter[methodName];
   var backupMethod = createBackupMethod(localAdapter, methodName);
+  var isOffline    = adapter.container.lookup('syncer:main').isOffline;
 
   adapter[methodName] = function() {
-    return originMethod.apply(adapter, arguments).catch(backup(backupMethod, arguments));
+    return originMethod.apply(adapter, arguments)
+      .catch(backup(isOffline, backupMethod, arguments));
   };
 
   adapter.fryctoria[methodName] = originMethod;

@@ -18,11 +18,11 @@ export function initialize(container, application) {
    * Decide what is offline
    * The following is the default behavior
    */
-  // syncer.reopen({
-  //   isOffline: function(error) {
-  //     return error && error.status === 0;
-  //   }
-  // });
+  syncer.reopen({
+    isOffline: function(error) {
+      return error && error.status === 0;
+    }
+  });
 }
 
 export default {

@@ -1,13 +1,11 @@
 import Ember from 'ember';
-import isOffline from './is-offline';
 
-export default function backup(backupFn, args) {
+export default function backup(isOffline, backupFn, args) {
   return function(error) {
-    var isOnline = !isOffline(error && error.status);
-    if(isOnline) {
+    if(isOffline(error)) {
+      return backupFn.apply(null, args);
+    } else {
       return Ember.RSVP.reject(error);
     }
-
-    return backupFn.apply(null, args);
   };
 }
