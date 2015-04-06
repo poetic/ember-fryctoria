@@ -21,7 +21,7 @@ It always try to connect to the server and fall back to local data when an offli
 
 When online, it will use your defalut store, adapter and serializer. After each request to server, it will automatically save records into localforage-adapter.
 
-When offline, it will use the local backup(localforage-adapter) to retrive records. A queue of jobs is created when the user create, update or delete while offline. When online we flush this queue to keep the server in sync.
+When offline, it will use the local backup(localforage) to retrive records. A queue of jobs is created when the user create, update or delete while offline. When online we flush this queue to keep the server in sync.
 
 **Features NOT supported(yet):**
 - Sideloaded records are not saved to localforage automatically, only the main
@@ -31,30 +31,44 @@ When offline, it will use the local backup(localforage-adapter) to retrive recor
 
 
 # How to sync?
-An object called *syncer* is responsible for syncing. It is registered into
-container and you can get it via *container.lookup('main:syncer')*.
+An object called *syncer* is responsible for syncing.
+- It is registered into *container*, therefore you can get syncer like this
+```javascript
+container.lookup('main:syncer')
+```
+
+- It is also injected into main *store*, therefore you can get syncer like this
+```javascript
+store.get('syncer')
+```
 
 It has a *jobs* property whichs is a queue of operations including create, update and delete. These are your offline operations.
 
 There are two important methods in *syncer*:
 
-- syncUp: push local changes to remote server
-- syncDown: save changes from remote server to localforage
-
-In most cases, you do not need to manully sync since ember-fryctoria automatially syncUp before every request to server and automatially syncDown after every request to server.
-
-However, when you sideload or embed records, you probably want to manully save sideloaded or embeded records to localforage. Also you may want to syncUp periodially. In these cases, you can manully syncDown or syncUp.
-
-*syncer* is injected into store. So you can do this to flush the queue of jobs:
+- syncUp: push local changes to remote server, flush the queue of jobs.
+- syncDown: save data in main *store* into localforage.
 ```javascript
-store.syncer.syncUp();
+syncer.syncDown('user');         // remove all records in localforage and save all current user records into localforage
+syncer.syncDown(user);           // create or update user record into localforage
+syncer.syncDown([user1, user2]); // create or update user records into localforage
 ```
-You can also capture records into localforage from ember-data store by doing this:
+
+### Automatic sync
+In most cases, you do not need to manully sync since ember-fryctoria automatially
+*syncUp* before every request to server and automatially
+*syncDown* after every request to server.
 ```javascript
-store.syncer.syncDown('user'); // remove all records in localforage and save all current user records in localforage
-store.syncer.syncDown(user); // create or update user record into localforage
-store.syncer.syncDown([user1, user2]); // create or update user records into localforage
+store.find('user')         // syncDown('user') is called.
+store.fetchAll('user')     // syncDown('user') is called.
+store.find('user', 1)      // syncDown(user) is called.
+store.fetchById('user', 1) // syncDown(user) is called.
+user.reload()              // syncDown(user) is called.
 ```
+
+### Manual sync
+When you sideload or embed records, you probably want to manully save sideloaded or embeded records to localforage. Also you may want to syncUp periodially. In these cases, you can manully syncDown or syncUp.
+
 
 # How to handle errors during syncUp?
 By default, when we get an error during syncUp, syncer will stop syncing. In the
