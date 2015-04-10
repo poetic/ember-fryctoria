@@ -1,12 +1,11 @@
 # Warning
-Currently this addon is still in development yet. We are going to release a
-beta version very soon.
+Now the addon is in alpha, please help by reporting bugs and opening issues.
 
 # Instruction
 ### Step1: Install the addons, generate an initializer
 ```bash
-ember addon:install ember-localforage-adapter
-ember addon:install ember-fryctoria
+ember install ember-localforage-adapter
+ember install ember-fryctoria
 ember g reopen-syncer-initializer
 ```
 ### Step2: Offline!
@@ -28,6 +27,7 @@ When offline, it will use the local backup(localforage) to retrive records. A qu
   records are saved.
 - Changes in embeded records will not be pushed to server if you create or update offline
   and try to sync when online. Only the main record will be updated or created.
+- Customized transforms are not supported, see work around [here](https://github.com/poetic/ember-fryctoria/issues/1).
 
 
 # How to sync?
