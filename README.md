@@ -24,7 +24,7 @@ When offline, it will use the local backup(localforage) to retrive records. A qu
 
 **Features NOT supported(yet):**
 - Sideloaded records are not saved to localforage automatically, only the main
-  records are saved.
+  records are saved. [Here](https://github.com/poetic/ember-fryctoria/issues/2) is a work around.
 - Changes in embeded records will not be pushed to server if you create or update offline
   and try to sync when online. Only the main record will be updated or created.
 - Customized transforms are not supported, see work around [here](https://github.com/poetic/ember-fryctoria/issues/1).
