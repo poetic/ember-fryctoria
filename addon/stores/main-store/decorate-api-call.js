@@ -12,6 +12,14 @@ export default function decorateAPICall(finderType) {
     var syncer       = store.get('syncer');
     var _superFinder = store.__nextSuper;
 
+    if(args.length > 0) {
+      var options = args[args.length - 1];
+      var bypass  = (typeof options === 'object') && options.bypass;
+      if(bypass) {
+        return _superFinder.apply(store, args);
+      }
+    }
+
     return syncUp()
       .then(function() { return _superFinder.apply(store, args); })
       .then(syncDown);

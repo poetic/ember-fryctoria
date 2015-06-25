@@ -1,6 +1,6 @@
 {
   "name": "ember-fryctoria",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Make ember data work offline with automatic sync.",
   "directories": {
     "doc": "doc",

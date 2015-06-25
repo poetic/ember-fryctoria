@@ -88,3 +88,10 @@ By default, offline is defined by ```jqXHR && jqXHR.status === 0```.
 
 You can overwrite this by overwriting *isOffline* method in syncer in
 reopen-syncer-initializer.
+
+# How to bypass syncing
+You can bypass syncing by passing an option object {bypass: true} at the end of
+a api call of store:
+```
+store.find('user', {bypass: true}) // this would not wait for syncing
+```
