@@ -7,6 +7,6 @@ export function initialize(/* container, application */) {
 
 export default {
   name:       'extend-ds-model',
-  before:     'store',
+  before:     'ember-data',
   initialize: initialize
 };

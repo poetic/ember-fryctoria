@@ -8,7 +8,7 @@ export function initialize(container, application) {
 
 export default {
   name:       'syncer',
-  before:     'store',
+  before:     'ember-data',
   after:      'extend-ds-model',
   initialize: initialize
 };
